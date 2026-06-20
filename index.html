@@ -30,7 +30,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background-color: #0d0d0c;
+      background-color: #000000;
       margin: 0;
       padding: 0;
       overflow: hidden;
@@ -46,22 +46,12 @@
     }
 
     /* iOS純正の極薄かつ美しい数字表示 (等幅仕様でブレを完璧防止) */
-    .ios-timer-font {
-      font-family: 'Inter', -apple-system, sans-serif;
-      font-weight: 100;
-      font-size: 5.5rem; /* 本物同様の迫力と美しさ */
-      letter-spacing: -0.05em;
-      font-variant-numeric: tabular-nums;
-      font-feature-settings: "tnum" on;
-      line-height: 1;
-    }
-
     .tabular-timer {
       font-family: "Inter", "SF Pro Display", -apple-system, sans-serif;
       font-variant-numeric: tabular-nums;
       font-feature-settings: "tnum" on;
-      font-weight: 100;
-      letter-spacing: -0.04em;
+      font-weight: 100; /* 超極薄に設定 */
+      letter-spacing: -0.05em; /* 文字間隔を本物同様にタイトに調整 */
     }
 
     /* iOS 3D風ドラムロールピッカー */
@@ -76,7 +66,7 @@
     }
 
     .picker-column {
-      width: 100px; /* 単位が右側に綺麗に収まるよう幅を最適化 */
+      width: 54px; /* 数字スクロールの横幅を固定 */
       height: 180px;
       position: relative;
       overflow-y: scroll;
@@ -227,12 +217,12 @@
       scrollbar-width: none;
     }
 
-    /* デバイスフレーム適用時のブレンド・グラデーション背景(PC用) */
+    /* PC大画面時の背景グラデーション */
     .pc-backdrop {
       background: radial-gradient(circle at center, #1c1c1e 0%, #000000 100%);
     }
 
-    /* スマートフォン・PWAスタンドアロン時用のレスポンシブ・セーフエリア指定 */
+    /* PWA用スマートレスポンシブコンテナ */
     @media (max-width: 639px) {
       .phone-container {
         width: 100% !important;
@@ -250,22 +240,22 @@
 </head>
 <body class="pc-backdrop flex items-center justify-center">
 
-  <!-- ================= PHONE DEVICE OUTER FRAME (PC画面でiPhoneフレームを描画して余白を完全にカバー) ================= -->
-  <!-- 横幅は本物同様の比率、底辺余白バグはPWA・PCともに物理的に0にします -->
-  <div id="app-container" class="phone-container relative w-[412px] h-[846px] bg-[#000000] rounded-[48px] border-[10px] border-[#1c1c1e] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] overflow-hidden flex flex-col justify-between transition-all duration-300">
+  <!-- ================= APP WRAPPER CONTAINER ================= -->
+  <!-- PC画面では美しいiPhoneサイズ枠として機能し、スマートフォンでは自動で枠が消えて100%吸着フルスクリーンになります -->
+  <div id="app-container" class="phone-container relative w-[393px] h-[852px] bg-[#000000] rounded-[48px] border-[8px] border-[#1c1c1e] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] overflow-hidden flex flex-col justify-between transition-all duration-300">
     
-    <!-- iPhoneノッチ（PCなどの大画面時のみ表示される本物のアクセント） -->
-    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-7 bg-[#1c1c1e] rounded-b-2xl z-[99] hidden sm:block"></div>
+    <!-- iPhoneノッチ (大画面時のアクセント) -->
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-36 h-6 bg-[#1c1c1e] rounded-b-2xl z-[99] hidden sm:block"></div>
 
     <!-- ================= FIXED MAIN VIEWPORT (コンテンツ表示部) ================= -->
-    <!-- 下部タブバー（高さ60px + env-bottom）の上にピタッと配置し、スクロール要素が下に突き抜けないようにします -->
-    <div class="absolute inset-x-0 top-0 flex flex-col justify-between safe-pt overflow-hidden" style="bottom: calc(60px + env(safe-area-inset-bottom, 8px));">
+    <!-- ナビゲーションバーの高さ（60px + セーフエリア）の分だけ正確にボトムを空け、スクロール競合をゼロにします -->
+    <div class="absolute inset-x-0 top-0 flex flex-col justify-between safe-pt overflow-hidden" style="bottom: calc(60px + env(safe-area-inset-bottom, 12px));">
       
       <!-- ================= TOP HEADER ================= -->
-      <header class="flex justify-between items-center px-6 pt-2 pb-1 flex-shrink-0">
+      <header class="flex justify-between items-center px-6 pt-3 pb-1 flex-shrink-0">
         <div class="flex-1"></div>
         <!-- アラーム画面でのみ右上にプラスボタンを表示 -->
-        <button id="header-btn-add-alarm" class="hidden text-orange-500 hover:opacity-80 active:scale-95 transition-all animate-fade-in" onclick="openAlarmAddMenu(event)">
+        <button id="header-btn-add-alarm" class="hidden text-orange-500 hover:opacity-80 active:scale-95 transition-all" onclick="openAlarmAddMenu(event)">
           <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
         </button>
         <button id="pwa-install-btn" class="hidden text-orange-500 text-sm font-semibold flex items-center gap-1 bg-neutral-950 px-3 py-1.5 rounded-full border border-neutral-800">
@@ -341,33 +331,36 @@
         <!-- 3. TIMER VIEW -->
         <div id="view-timer" class="flex flex-col flex-1 justify-between py-2 transition-all duration-300">
           
-          <!-- A. 新規作成用 ドラムロールピッカー画面 -->
+          <!-- A. 新規作成用 ドラムロールピッカー画面 (iOS完全シミュレート単位固定) -->
           <div id="timer-setup-panel" class="flex-1 flex flex-col justify-center">
             <div class="picker-viewport w-full max-w-sm mx-auto">
               <div class="picker-center-indicator"></div>
               <div class="picker-overlay-top"></div>
               <div class="picker-overlay-bottom"></div>
 
-              <div class="flex justify-center items-center w-full h-full">
-                <!-- Hours (一桁フォーマット表示) -->
+              <div class="flex justify-center items-center h-full w-full relative z-20">
+                <!-- Hours Wheel -->
                 <div class="flex items-center relative h-[180px]">
                   <div id="col-hours" class="picker-column" onscroll="onPickerScroll(this, 'hours')">
                     <div class="picker-scroller" id="scroller-hours"></div>
                   </div>
+                  <span class="text-white text-[15px] font-semibold select-none pointer-events-none z-30 ml-0.5">時間</span>
                 </div>
 
-                <!-- Minutes -->
-                <div class="flex items-center relative h-[180px] ml-1">
+                <!-- Minutes Wheel -->
+                <div class="flex items-center relative h-[180px] ml-4">
                   <div id="col-minutes" class="picker-column" onscroll="onPickerScroll(this, 'minutes')">
                     <div class="picker-scroller" id="scroller-minutes"></div>
                   </div>
+                  <span class="text-white text-[15px] font-semibold select-none pointer-events-none z-30 ml-0.5">分</span>
                 </div>
 
-                <!-- Seconds -->
-                <div class="flex items-center relative h-[180px] ml-1">
+                <!-- Seconds Wheel -->
+                <div class="flex items-center relative h-[180px] ml-4">
                   <div id="col-seconds" class="picker-column" onscroll="onPickerScroll(this, 'seconds')">
                     <div class="picker-scroller" id="scroller-seconds"></div>
                   </div>
+                  <span class="text-white text-[15px] font-semibold select-none pointer-events-none z-30 ml-0.5">秒</span>
                 </div>
               </div>
             </div>
@@ -397,9 +390,8 @@
             </div>
           </div>
 
-          <!-- B. 単体タイマー稼働中表示 (IMG_0639.png 完璧再現) -->
+          <!-- B. 単体タイマー稼働中表示 (IMG_0639.png を完全再現) -->
           <div id="timer-running-single-panel" class="hidden flex-1 flex flex-col justify-center items-center">
-            <!-- 円形インディケータ -->
             <div class="relative w-76 h-72 md:w-80 md:h-80 flex items-center justify-center">
               <svg class="absolute top-0 left-0 w-full h-full" viewBox="0 0 220 220">
                 <circle cx="110" cy="110" r="105" fill="transparent" stroke="#1c1c1e" stroke-width="1.2" />
@@ -408,17 +400,15 @@
               <div class="flex flex-col items-center justify-center z-10 text-center">
                 <!-- タイマー稼働中用のラベル名 -->
                 <span id="timer-running-title" class="text-[#8e8e93] text-sm font-normal tracking-wide mb-1 select-none">タイマー</span>
-                <!-- 究極に美しく細いフォントで、ブレない残り時間表示 -->
-                <span id="timer-countdown" class="ios-timer-font text-white">4:59</span>
+                <!-- 究極に細く研ぎ澄まされた極上のInterフォント表示 -->
+                <span id="timer-countdown" class="text-6xl font-thin tracking-tight tabular-timer text-white select-none">4:59</span>
                 <div class="flex items-center gap-1 text-[15px] text-[#8e8e93] mt-2 font-normal">
-                  <!-- ベルアイコン -->
                   <svg class="w-3.5 h-3.5 fill-current text-[#8e8e93]" viewBox="0 0 24 24">
                     <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
                   </svg>
                   <span id="timer-finish-eta">22:49</span>
                 </div>
                 
-                <!-- Picture-in-Picture 小窓表示ボタン -->
                 <button id="btn-pip" class="mt-4 px-3.5 py-1.5 bg-[#1c1c1e] hover:bg-[#2c2c2e] border border-neutral-800 rounded-full text-[11px] font-semibold text-orange-500 flex items-center gap-1 active:scale-95 transition-all shadow-md">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0v8m0-8L8 15M4 19h4a2 2 0 002-2v-4a2 2 0 00-2-2H4a2 2 0 00-2 2v4a2 2 0 002 2z"/>
@@ -428,13 +418,12 @@
               </div>
             </div>
 
-            <!-- 操作コントロール -->
             <div class="flex justify-between items-center px-4 max-w-sm mx-auto w-full pt-8">
               <button id="timer-btn-cancel-active" class="ios-btn btn-gray-active">キャンセル</button>
               <button id="timer-btn-pause-resume" class="ios-btn btn-orange-pause">一時停止</button>
             </div>
 
-            <!-- 終了時設定カード -->
+            <!-- タイマー終了時設定 -->
             <div class="mt-8 max-w-sm mx-auto w-full px-2">
               <div class="flex justify-between items-center bg-[#1c1c1e] p-3.5 rounded-xl cursor-pointer active:brightness-90" onclick="openSoundMenu(event)">
                 <span class="text-neutral-200 text-[15px]">タイマー終了時</span>
@@ -446,15 +435,13 @@
             </div>
           </div>
 
-          <!-- C. 複数タイマー稼旧中リストビュー -->
+          <!-- C. 複数タイマー稼働中リストビュー -->
           <div id="timers-active-container" class="hidden flex-1 flex flex-col justify-start overflow-y-auto no-scrollbar mt-4 max-h-[340px]">
             <div class="text-[12px] text-neutral-500 font-bold tracking-wider uppercase mb-2 px-2">実行中のタイマー</div>
-            <div id="active-timers-list" class="space-y-2.5 px-1">
-              <!-- 実行中タイマー行 -->
-            </div>
+            <div id="active-timers-list" class="space-y-2.5 px-1"></div>
           </div>
 
-          <!-- 下部の履歴お気に入りボックス -->
+          <!-- 履歴 -->
           <div id="timer-history-container" class="max-w-sm mx-auto w-full mt-4">
             <div class="text-[11px] text-neutral-500 font-bold tracking-wider uppercase mb-2 px-1">最近の項目</div>
             <div id="timer-history-list" class="flex gap-2 overflow-x-auto pb-1 no-scrollbar"></div>
@@ -467,13 +454,13 @@
             <!-- Digital Face -->
             <div id="sw-digital-face" class="flex flex-col items-center justify-center">
               <div class="text-7xl font-extralight tracking-tighter tabular-timer flex items-baseline select-none">
-                <span id="sw-time-main" style="font-weight: 100; font-family: 'Inter', sans-serif;">00:00.</span>
-                <span id="sw-time-ms" style="font-weight: 100; font-family: 'Inter', sans-serif;" class="text-[4rem]">00</span>
+                <span id="sw-time-main" class="tabular-timer text-white">00:00.</span>
+                <span id="sw-time-ms" class="text-5xl font-extralight text-neutral-300 ml-0.5 tabular-timer">00</span>
               </div>
               <span class="text-xs text-neutral-500 mt-4 uppercase tracking-widest font-semibold">タップで盤面を切り替え</span>
             </div>
 
-            <!-- Analog Face (Vector Perfect SVG) -->
+            <!-- Analog Face -->
             <div id="sw-analog-face" class="hidden relative w-72 h-72 md:w-80 md:h-80 flex items-center justify-center mx-auto">
               <svg id="sw-analog-svg" class="w-full h-full max-w-[280px] max-h-[280px]" viewBox="0 0 200 200">
                 <circle cx="100" cy="100" r="96" fill="#000000" stroke="#1c1c1e" stroke-width="2"/>
@@ -524,9 +511,9 @@
       </main>
     </div>
 
-    <!-- ================= TABS NAVIGATION (絶対配置ボトム完全密着吸着) ================= -->
+    <!-- ================= TABS NAVIGATION (絶対配置ボトム完全吸着) ================= -->
     <!-- これにより、PC画面でもスマホ実機でも、タブバーの下に不自然な黒い隙間は物理的に発生しなくなります。 -->
-    <nav class="absolute bottom-0 inset-x-0 h-16 bg-[#161616]/95 backdrop-blur-xl border-t border-white/10 flex justify-around items-center text-[10px] safe-pb z-[98]">
+    <nav class="absolute bottom-0 inset-x-0 h-16 bg-[#161616]/95 backdrop-blur-xl border-t border-white/10 flex justify-around items-center text-[10px] pb-[env(safe-area-inset-bottom,12px)] z-[98]">
       <button id="tab-world" class="flex flex-col items-center text-neutral-600 focus:outline-none transition-colors duration-200">
         <svg class="w-[23px] h-[23px] mb-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="10" /><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" /><path d="M2 12h20" />
@@ -828,9 +815,9 @@
       worldClockInterval = setInterval(update, 1000);
     }
 
-    // ================= ALARM CONTROLLER (アラーム管理システム) =================
+    // ================= ALARM CONTROLLER =================
     let savedAlarms = [];
-    let selectedAlarmDays = [false, false, false, false, false, false, false]; // 月[0]〜日[6]
+    let selectedAlarmDays = [false, false, false, false, false, false, false]; 
 
     function openAlarmAddMenu(event) {
       if (event) {
@@ -1055,6 +1042,7 @@
         const numStr = isHours ? String(idx) : String(idx).padStart(2, '0');
         if (idx === targetIdx) {
           item.classList.add('active');
+          // 単位（時間、分、秒）を数字の直後に美しく結合
           item.textContent = `${numStr} ${unit}`;
           item.style.fontWeight = '500';
           item.style.color = '#ffffff';
@@ -1796,6 +1784,16 @@
       const ms = Math.floor((duration % 1000) / 10);
       return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}.${String(ms).padStart(2, '0')}`;
     }
+
+    swBtnPrimary.addEventListener('click', () => {
+      if (swState === 'running') swStop();
+      else swStart();
+    });
+
+    swBtnLap.addEventListener('click', () => {
+      if (swState === 'running') swLap();
+      else if (swState === 'paused') swReset();
+    });
 
     // ================= LABEL OPTIONS SHEET =================
     function openLabelMenu(event) {
