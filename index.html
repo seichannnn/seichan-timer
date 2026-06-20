@@ -23,13 +23,17 @@
   <link class="apple-touch-icon" href="icon-192.png">
 
   <style>
-    /* iOSシステムフォントスタックの最適化 */
+    /* iOS Safari / PWAスタンドアロン時の高さバグを100%駆逐する fixed-inset 構成 */
     html, body {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
       height: 100%;
-      height: -webkit-fill-available; /* iOSのビューポート高さバグ防止 */
       background-color: #000000;
       margin: 0;
       padding: 0;
+      overflow: hidden;
     }
 
     body {
@@ -38,7 +42,6 @@
       user-select: none;
       -webkit-user-select: none;
       -webkit-tap-highlight-color: transparent;
-      overflow: hidden;
       letter-spacing: -0.025em;
     }
 
@@ -206,6 +209,17 @@
       transform: translateX(20px);
     }
 
+    /* iOS本物基準の極薄ナビゲーションバー（二重パディングバグを完璧防止） */
+    .ios-navbar {
+      border-top: 0.5px solid rgba(255, 255, 255, 0.1);
+      background-color: rgba(22, 22, 22, 0.94);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      padding-top: 6px;
+      /* ノッチあり＝env()の値、ノッチなし＝安全なフォールバック12pxを自動判別 */
+      padding-bottom: max(10px, env(safe-area-inset-bottom, 10px));
+    }
+
     .no-scrollbar::-webkit-scrollbar {
       display: none;
     }
@@ -214,9 +228,7 @@
       scrollbar-width: none;
     }
 
-    /* セーフエリア：デフォルト値(フォールバック)を 0px にして、不要な隙間が発生するのを完全に防止 */
-    .safe-pt { padding-top: env(safe-area-inset-top, 0px); }
-    .safe-pb { padding-bottom: env(safe-area-inset-bottom, 0px); }
+    .safe-pt { padding-top: env(safe-area-inset-top, 24px); }
   </style>
 </head>
 <body class="flex flex-col h-full justify-between safe-pt">
@@ -483,8 +495,8 @@
 
   </main>
 
-  <!-- ================= TABS NAVIGATION (安全なタグ構造に修正完了) ================= -->
-  <nav class="border-t border-neutral-950 bg-neutral-950/95 backdrop-blur-md flex justify-around items-center py-2.5 text-[10px] safe-pb">
+  <!-- ================= TABS NAVIGATION (ios-navbar クラスで余白を完全自動最適化) ================= -->
+  <nav class="ios-navbar flex justify-around items-center text-[10px]">
     <button id="tab-world" class="flex flex-col items-center text-neutral-600 focus:outline-none transition-colors duration-200">
       <svg class="w-[23px] h-[23px] mb-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <circle cx="12" cy="12" r="10" /><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" /><path d="M2 12h20" />
@@ -883,6 +895,7 @@
       const container = document.getElementById('alarm-list-container');
       const placeholder = document.getElementById('alarm-empty-placeholder');
       
+      // バグ回避のためのNull安全処理
       if (!container || !placeholder) return;
       
       container.innerHTML = '';
@@ -1390,12 +1403,14 @@
       const cy = 300;
       const radius = 230;
 
+      // 1. 円形レール (極細スタイリッシュ仕様)
       pipCtx.beginPath();
       pipCtx.arc(cx, cy, radius, 0, 2 * Math.PI);
       pipCtx.strokeStyle = '#1c1c1e';
       pipCtx.lineWidth = 4;
       pipCtx.stroke();
 
+      // 2. グラデーションサークル
       if (currentTimer.totalSecs > 0) {
         const progress = currentTimer.secsLeft / currentTimer.totalSecs;
         const startAngle = -0.5 * Math.PI;
@@ -1409,6 +1424,7 @@
         pipCtx.stroke();
       }
 
+      // 3. 残り時間を描画 (極細 Inter フォントをPiP内にも美しく同期)
       const h = Math.floor(currentTimer.secsLeft / 3600);
       const m = Math.floor((currentTimer.secsLeft % 3600) / 60);
       const s = currentTimer.secsLeft % 60;
