@@ -253,8 +253,8 @@
     <div class="absolute top-0 left-1/2 -translate-x-1/2 w-36 h-6 bg-[#1c1c1e] rounded-b-2xl z-[99] hidden sm:block"></div>
 
     <!-- ================= FIXED MAIN VIEWPORT (コンテンツ表示領域) ================= -->
-    <!-- タブバーの正確な高さ(49px + env-bottom)の上に配置し、要素の競合を完全にゼロにします -->
-    <div class="absolute inset-x-0 top-0 flex flex-col justify-between safe-pt overflow-hidden" style="bottom: calc(49px + env(safe-area-inset-bottom, 0px));">
+    <!-- タブバーの正確な高さ(4rem + env-bottom)の上に配置し、要素の競合を完全にゼロにします -->
+    <div class="absolute inset-x-0 top-0 flex flex-col justify-between safe-pt overflow-hidden" style="bottom: calc(4rem + env(safe-area-inset-bottom, 0px));">
       
       <!-- ================= TOP HEADER ================= -->
       <header class="flex justify-between items-center px-6 pt-3 pb-1 flex-shrink-0">
@@ -346,7 +346,7 @@
               <div class="flex justify-center items-center h-full w-full relative z-20">
                 <!-- Hours Wheel -->
                 <div class="flex items-center relative h-[180px]">
-                  <div id="col-hours" class="picker-column">
+                  <div id="col-hours" class="picker-column" onscroll="onPickerScroll(this, 'hours')">
                     <div class="picker-scroller" id="scroller-hours"></div>
                   </div>
                   <span class="text-white text-[15px] font-semibold select-none pointer-events-none z-30 ml-1.5">時間</span>
@@ -354,7 +354,7 @@
 
                 <!-- Minutes Wheel -->
                 <div class="flex items-center relative h-[180px] ml-5">
-                  <div id="col-minutes" class="picker-column">
+                  <div id="col-minutes" class="picker-column" onscroll="onPickerScroll(this, 'minutes')">
                     <div class="picker-scroller" id="scroller-minutes"></div>
                   </div>
                   <span class="text-white text-[15px] font-semibold select-none pointer-events-none z-30 ml-1.5">分</span>
@@ -362,7 +362,7 @@
 
                 <!-- Seconds Wheel -->
                 <div class="flex items-center relative h-[180px] ml-5">
-                  <div id="col-seconds" class="picker-column">
+                  <div id="col-seconds" class="picker-column" onscroll="onPickerScroll(this, 'seconds')">
                     <div class="picker-scroller" id="scroller-seconds"></div>
                   </div>
                   <span class="text-white text-[15px] font-semibold select-none pointer-events-none z-30 ml-1.5">秒</span>
@@ -519,9 +519,10 @@
     <!-- 物理的な下部突き抜け背景ガード (Gapバグの絶対解決策) -->
     <div class="absolute inset-x-0 bottom-[-100px] h-[100px] bg-[#161616] z-[97] pointer-events-none"></div>
 
-    <!-- ================= TABS NAVIGATION (絶対配置ボトム完全密着吸着) ================= -->
-    <!-- これにより、PC画面でもスマホ実機でも、タブバーの下に不自然な黒い隙間は物理的に発生しなくなります。 -->
-    <nav class="absolute bottom-0 inset-x-0 h-16 bg-[#161616]/95 backdrop-blur-xl border-t border-white/10 flex justify-around items-center text-[10px] pb-[env(safe-area-inset-bottom,12px)] z-[98]">
+    <!-- ================= TABS NAVIGATION (絶対配置ボトム完全密着・漆黒シールド一体化) ================= -->
+    <!-- 高さを calc(4rem + env-bottom) で動的定義して padding-bottom でコンテンツを上に逃がすことで、 -->
+    <!-- 背景の漆黒が画面の底辺（ホームバーの奥深く）まで完全に途切れず吸着密着する iOS PWA 完全準拠 of 設計に変更しました。 -->
+    <nav class="absolute bottom-0 inset-x-0 h-16 bg-[#161616]/95 backdrop-blur-xl border-t border-white/10 flex justify-around items-center text-[10px] pb-[env(safe-area-inset-bottom,0px)] z-[98]" style="height: calc(4rem + env(safe-area-inset-bottom, 0px)); padding-bottom: env(safe-area-inset-bottom, 0px);">
       <button id="tab-world" class="flex flex-col items-center text-neutral-600 focus:outline-none transition-colors duration-200">
         <svg class="w-[23px] h-[23px] mb-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="10" /><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" /><path d="M2 12h20" />
@@ -617,8 +618,9 @@
   </div>
 
   <!-- ================= HIDDEN ELEMENTS FOR PICTURE IN PICTURE (高画質PiP用) ================= -->
-  <canvas id="pip-canvas" width="600" height="600" class="hidden" style="display: none;"></canvas>
-  <video id="pip-video" autoplay muted playsinline class="hidden" style="display: none;"></video>
+  <!-- iOS Safari でPiPを動作させるため、display: noneにせず opacity: 0 かつ offscreen 配置に変更しました -->
+  <canvas id="pip-canvas" width="600" height="600" class="absolute pointer-events-none opacity-0" style="width: 1px; height: 1px; left: -9999px;"></canvas>
+  <video id="pip-video" autoplay muted playsinline class="absolute pointer-events-none opacity-0" style="width: 1px; height: 1px; left: -9999px;"></video>
 
   <!-- ================= SOUNDS SYNTHESIZER AND OPERATIONAL AUDIO ================= -->
   <script>
@@ -752,6 +754,28 @@
     const viewStopwatch = document.getElementById('view-stopwatch');
 
     let activeTab = 'timer';
+
+    // ★安全なカスタム iOS トースト通知機能 (iframeでクラッシュする alert 対策)
+    function showToast(message) {
+      const existing = document.querySelectorAll('.custom-toast');
+      existing.forEach(t => t.remove());
+
+      const toast = document.createElement('div');
+      toast.className = 'custom-toast fixed top-16 left-1/2 -translate-x-1/2 bg-[#1c1c1e] text-white text-[13px] font-medium px-5 py-2.5 rounded-full shadow-2xl border border-white/10 z-[999] transition-all duration-300 transform -translate-y-4 opacity-0 pointer-events-none';
+      toast.textContent = message;
+      document.body.appendChild(toast);
+
+      toast.offsetHeight; // リフロー強制
+
+      toast.classList.remove('-translate-y-4', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('-translate-y-4', 'opacity-0');
+        setTimeout(() => toast.remove(), 300);
+      }, 2500);
+    }
 
     function switchTab(targetTab) {
       initAudio();
@@ -1346,7 +1370,7 @@
       drawHistoryPills();
     }
 
-    // 履歴読込の retrieveHistory
+    // 履歴読込 of retrieveHistory
     function retrieveHistory() {
       const raw = localStorage.getItem('ios_timer_recent_history');
       if (raw) {
@@ -1357,7 +1381,7 @@
       drawHistoryPills();
     }
 
-    // 履歴描画の drawHistoryPills
+    // 履歴描画 of drawHistoryPills
     function drawHistoryPills() {
       const histContainer = document.getElementById('timer-history-list');
       if (!histContainer) return;
@@ -1404,11 +1428,15 @@
     }
 
     // ================= PICTURE-IN-PICTURE =================
-    const pipCanvas = document.getElementById('pip-canvas');
-    const pipCtx = pipCanvas.getContext('2d');
-    const pipVideo = document.getElementById('pip-video');
-    const btnPip = document.getElementById('btn-pip');
-    let pipStream = null;
+    let pipCanvas = null;
+    let pipCtx = null;
+    let pipVideo = null;
+
+    function initPip() {
+      if (!pipCanvas) pipCanvas = document.getElementById('pip-canvas');
+      if (pipCanvas && !pipCtx) pipCtx = pipCanvas.getContext('2d');
+      if (!pipVideo) pipVideo = document.getElementById('pip-video');
+    }
 
     function getPriorityTimer() {
       if (activeTimers.length === 0) return null;
@@ -1419,7 +1447,13 @@
       return activeTimers[0]; 
     }
 
+    // ★ 修正：未定義になっていた updateActivePiP 関数をここに確実に実装
+    function updateActivePiP() {
+      drawPipCanvas();
+    }
+
     function drawPipCanvas() {
+      initPip();
       if (!pipCtx) return;
 
       const currentTimer = getPriorityTimer();
@@ -1496,9 +1530,10 @@
     async function triggerPictureInPicture() {
       initAudio();
       playHapticTick();
+      initPip();
 
       if (activeTimers.length === 0) {
-        alert("タイマーを開始してから「小窓で表示 (PiP)」を押してください。");
+        showToast("タイマーを開始してからタップしてください");
         return;
       }
 
@@ -1577,7 +1612,7 @@
       const hasWebKitPiP = typeof pipVideo.webkitSetPresentationMode === 'function';
 
       if (!hasStandardPiP && !hasWebKitPiP) {
-        alert("お使いのWebブラウザはPicture-in-Picture機能に対応していません。");
+        showToast("お使いのWebブラウザはPiPに対応していません");
         return;
       }
 
@@ -1711,7 +1746,6 @@
       updateStopwatchTimer(); 
     }
 
-    // swReset の復旧
     function swReset() {
       try {
         playHapticTick();
@@ -1926,6 +1960,16 @@
       document.body.addEventListener('click', () => {
         initAudio();
       }, { once: true });
+
+      // ★ 視点を変えた最強のバウンスロック処理 ★
+      document.addEventListener('touchmove', function(e) {
+        const isScrollable = e.target.closest('.overflow-y-auto') || 
+                             e.target.closest('.overflow-y-scroll') || 
+                             e.target.closest('.overflow-x-auto');
+        if (!isScrollable) {
+          e.preventDefault();
+        }
+      }, { passive: false });
     };
 
     // 繰り返し曜日設定のボタントグル設定
@@ -1965,7 +2009,7 @@
         deferredInstallPrompt = null;
         pwaButton.classList.add('hidden');
       } else {
-        alert("Safariブラウザ下部の「共有ボタン（↑）」から「ホーム画面に追加」を実行してインストールしてください。");
+        showToast("Safariの「共有」ボタンから「ホーム画面に追加」してください");
       }
     });
 
