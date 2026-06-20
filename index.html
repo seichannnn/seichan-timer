@@ -24,9 +24,16 @@
 
   <style>
     /* iOSシステムフォントスタックの最適化 */
+    html, body {
+      height: 100%;
+      height: -webkit-fill-available; /* iOSのビューポート高さバグ防止 */
+      background-color: #000000;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Inter", "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
-      background-color: #000000;
       color: #ffffff;
       user-select: none;
       -webkit-user-select: none;
@@ -207,11 +214,12 @@
       scrollbar-width: none;
     }
 
-    .safe-pt { padding-top: env(safe-area-inset-top, 24px); }
-    .safe-pb { padding-bottom: env(safe-area-inset-bottom, 20px); }
+    /* セーフエリア：デフォルト値(フォールバック)を 0px にして、不要な隙間が発生するのを完全に防止 */
+    .safe-pt { padding-top: env(safe-area-inset-top, 0px); }
+    .safe-pb { padding-bottom: env(safe-area-inset-bottom, 0px); }
   </style>
 </head>
-<body class="flex flex-col h-[100dvh] justify-between safe-pt safe-pb">
+<body class="flex flex-col h-full justify-between safe-pt">
 
   <!-- ================= TOP HEADER ================= -->
   <header class="flex justify-between items-center px-6 pt-4 pb-1">
@@ -240,52 +248,53 @@
           </div>
           <div class="text-right">
             <span id="world-time-tokyo" class="text-5xl font-light tracking-tighter tabular-timer">0:00</span>
-            <span id="world-ampm-tokyo" class="text-lg font-light ml-1">AM</span>
           </div>
         </div>
         <!-- クパチーノ -->
         <div class="flex justify-between items-center py-4">
           <div>
-            <div class="text-neutral-400 text-xs font-normal" id="world-diff-cupertino">今日, -17時間</div>
+            <div id="world-diff-cupertino" class="text-neutral-400 text-xs font-normal">今日, -17時間</div>
             <div class="text-white text-2xl font-medium mt-0.5">クパチーノ</div>
           </div>
           <div class="text-right">
             <span id="world-time-cupertino" class="text-5xl font-light tracking-tighter tabular-timer">0:00</span>
-            <span id="world-ampm-cupertino" class="text-lg font-light ml-1">AM</span>
           </div>
         </div>
         <!-- ロンドン -->
         <div class="flex justify-between items-center py-4">
           <div>
-            <div class="text-neutral-400 text-xs font-normal" id="world-diff-london">今日, -8時間</div>
+            <div id="world-diff-london" class="text-neutral-400 text-xs font-normal">今日, -8時間</div>
             <div class="text-white text-2xl font-medium mt-0.5">ロンドン</div>
           </div>
           <div class="text-right">
             <span id="world-time-london" class="text-5xl font-light tracking-tighter tabular-timer">0:00</span>
-            <span id="world-ampm-london" class="text-lg font-light ml-1">AM</span>
           </div>
         </div>
         <!-- ニューヨーク -->
         <div class="flex justify-between items-center py-4">
           <div>
-            <div class="text-neutral-400 text-xs font-normal" id="world-diff-newyork">今日, -13時間</div>
+            <div id="world-diff-newyork" class="text-neutral-400 text-xs font-normal">今日, -13時間</div>
             <div class="text-white text-2xl font-medium mt-0.5">ニューヨーク</div>
           </div>
           <div class="text-right">
             <span id="world-time-newyork" class="text-5xl font-light tracking-tighter tabular-timer">0:00</span>
-            <span id="world-ampm-newyork" class="text-lg font-light ml-1">AM</span>
           </div>
         </div>
       </div>
     </div>
 
     <!-- 2. ALARM VIEW -->
-    <div id="view-alarm" class="hidden flex-col flex-1 justify-center items-center py-4 transition-all duration-300">
-      <div class="text-center">
+    <div id="view-alarm" class="hidden flex-col flex-1 justify-start py-4 overflow-y-auto no-scrollbar transition-all duration-300">
+      <div id="alarm-list-container" class="divide-y divide-neutral-800">
+        <!-- アラームが動的に追加されます -->
+      </div>
+      <!-- 空白時のプレースホルダー -->
+      <div id="alarm-empty-placeholder" class="hidden flex-1 flex-col justify-center items-center text-center py-10">
         <svg class="w-14 h-14 text-neutral-800 mx-auto mb-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
           <circle cx="12" cy="13" r="8" /><path d="M12 9v4l2 2" /><path d="M5 3L2 6" /><path d="M19 3l3 3" />
         </svg>
         <div class="text-neutral-500 text-lg font-medium">アラームはありません</div>
+        <p class="text-neutral-600 text-xs mt-1">右上の「＋」からアラームを追加できます</p>
       </div>
     </div>
 
@@ -436,13 +445,13 @@
               <line x1="164.6" y1="164.6" x2="159" y2="159"/>
               <line x1="35.4" y1="35.4" x2="41" y2="41"/>
               <line x1="164.6" y1="35.4" x2="159" y2="41"/>
-              <line x1="35.4" y1="164.6" x2="41" y2="159"/>
+              <line x1="35.4" y1="145" x2="41" y2="139"/>
             </g>
 
             <text x="100" y="28" font-size="12" font-weight="600" fill="#aeaeae" text-anchor="middle">60</text>
             <text x="100" y="182" font-size="12" font-weight="600" fill="#aeaeae" text-anchor="middle">30</text>
-            <text x="178" y="104" font-size="12" font-weight="600" fill="#aeaeae" text-anchor="middle">15</text>
-            <text x="22" y="104" font-size="12" font-weight="600" fill="#aeaeae" text-anchor="middle">45</text>
+            <text x="175" y="104" font-size="12" font-weight="600" fill="#aeaeae" text-anchor="middle">15</text>
+            <text x="25" y="104" font-size="12" font-weight="600" fill="#aeaeae" text-anchor="middle">45</text>
 
             <g>
               <circle cx="100" cy="62" r="22" fill="none" stroke="#1c1c1e" stroke-width="1"/>
@@ -474,7 +483,7 @@
 
   </main>
 
-  <!-- ================= TABS NAVIGATION ================= -->
+  <!-- ================= TABS NAVIGATION (安全なタグ構造に修正完了) ================= -->
   <nav class="border-t border-neutral-950 bg-neutral-950/95 backdrop-blur-md flex justify-around items-center py-2.5 text-[10px] safe-pb">
     <button id="tab-world" class="flex flex-col items-center text-neutral-600 focus:outline-none transition-colors duration-200">
       <svg class="w-[23px] h-[23px] mb-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -526,7 +535,7 @@
     </div>
   </div>
 
-  <!-- ================= ALARM ADD MODAL SHEET (新規追加モーダル) ================= -->
+  <!-- ================= ALARM ADD MODAL SHEET (新規追加モーダル：曜日指定の繰り返しを追加) ================= -->
   <div id="modal-alarm-add" class="fixed inset-0 bg-black/80 z-50 flex flex-col justify-end transition-opacity duration-300 opacity-0 pointer-events-none" onclick="closeAlarmAddMenu()">
     <div class="bg-[#1c1c1e] rounded-t-2xl w-full flex flex-col transition-transform duration-300 translate-y-full p-4 pb-8" onclick="event.stopPropagation()">
       <div class="flex justify-between items-center pb-4 border-b border-neutral-900">
@@ -534,7 +543,7 @@
         <span class="text-white font-semibold text-lg">アラームを追加</span>
         <button onclick="saveNewAlarm()" class="text-orange-500 font-semibold text-base">保存</button>
       </div>
-      <div class="py-6 flex justify-center gap-4">
+      <div class="py-4 flex justify-center gap-4 border-b border-neutral-800">
         <!-- 簡易的な時間・分選択 -->
         <select id="alarm-add-hour" class="bg-[#2c2c2e] text-white p-3 rounded-lg text-lg focus:outline-none w-20 text-center">
           <!-- JSで動的に追加 -->
@@ -542,6 +551,20 @@
         <select id="alarm-add-minute" class="bg-[#2c2c2e] text-white p-3 rounded-lg text-lg focus:outline-none w-20 text-center">
           <!-- JSで動的に追加 -->
         </select>
+      </div>
+      
+      <!-- 曜日指定繰り返しUI (iOS純正アラーム風) -->
+      <div class="py-4">
+        <div class="text-neutral-400 text-xs mb-3 text-center">繰り返し</div>
+        <div class="flex justify-center gap-1.5">
+          <button type="button" class="alarm-day-btn w-9 h-9 rounded-full bg-[#2c2c2e] text-sm text-neutral-300 font-medium flex items-center justify-center focus:outline-none transition-all duration-150" data-day="0">月</button>
+          <button type="button" class="alarm-day-btn w-9 h-9 rounded-full bg-[#2c2c2e] text-sm text-neutral-300 font-medium flex items-center justify-center focus:outline-none transition-all duration-150" data-day="1">火</button>
+          <button type="button" class="alarm-day-btn w-9 h-9 rounded-full bg-[#2c2c2e] text-sm text-neutral-300 font-medium flex items-center justify-center focus:outline-none transition-all duration-150" data-day="2">水</button>
+          <button type="button" class="alarm-day-btn w-9 h-9 rounded-full bg-[#2c2c2e] text-sm text-neutral-300 font-medium flex items-center justify-center focus:outline-none transition-all duration-150" data-day="3">木</button>
+          <button type="button" class="alarm-day-btn w-9 h-9 rounded-full bg-[#2c2c2e] text-sm text-neutral-300 font-medium flex items-center justify-center focus:outline-none transition-all duration-150" data-day="4">金</button>
+          <button type="button" class="alarm-day-btn w-9 h-9 rounded-full bg-[#2c2c2e] text-sm text-neutral-300 font-medium flex items-center justify-center focus:outline-none transition-all duration-150" data-day="5">土</button>
+          <button type="button" class="alarm-day-btn w-9 h-9 rounded-full bg-[#2c2c2e] text-sm text-neutral-300 font-medium flex items-center justify-center focus:outline-none transition-all duration-150" data-day="6">日</button>
+        </div>
       </div>
     </div>
   </div>
@@ -569,18 +592,27 @@
     let audioCtx = null;
     let alertLoopInterval = null;
 
+    // ★安全なAudioContext初期化 (例外保護によりブラウザやiframeのセキュリティ制限によるクラッシュを100%防止)
     function initAudio() {
-      if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      }
-      if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
+      try {
+        if (!audioCtx) {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (AudioContextClass) {
+            audioCtx = new AudioContextClass();
+          }
+        }
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+      } catch (e) {
+        console.warn("AudioContext initialization bypassed safely for PWA standard:", e);
       }
     }
 
     function playHapticTick() {
       try {
         initAudio();
+        if (!audioCtx) return;
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.connect(gain);
@@ -596,7 +628,7 @@
         osc.start();
         osc.stop(audioCtx.currentTime + 0.015);
       } catch (e) {
-        console.warn("Audio block:", e);
+        console.warn("Audio feedback block:", e);
       }
     }
 
@@ -604,6 +636,7 @@
       radar: {
         name: "レーダー (デフォルト)",
         play: () => {
+          if (!audioCtx) return;
           const now = audioCtx.currentTime;
           playPerfectChime(880.00, 0.08, now, 0.25); 
           playPerfectChime(880.00, 0.08, now + 0.12, 0.25); 
@@ -613,6 +646,7 @@
       chime: {
         name: "美しいチャイム",
         play: () => {
+          if (!audioCtx) return;
           const now = audioCtx.currentTime;
           const notes = [523.25, 659.25, 783.99, 1046.50];
           notes.forEach((f, i) => {
@@ -623,6 +657,7 @@
       uplift: {
         name: "アップリフト",
         play: () => {
+          if (!audioCtx) return;
           const now = audioCtx.currentTime;
           const notes = [440.00, 554.37, 659.25, 880.00];
           notes.forEach((f, i) => {
@@ -637,6 +672,7 @@
     function playPerfectChime(freq, duration, startTime, vol) {
       try {
         initAudio();
+        if (!audioCtx) return;
         const osc = audioCtx.createOscillator();
         const gainNode = audioCtx.createGain();
         osc.connect(gainNode);
@@ -653,10 +689,12 @@
     function startLoopingAlertSound() {
       initAudio();
       if (alertLoopInterval) clearInterval(alertLoopInterval);
-      INSTRUMENT_SOUNDS[selectedSoundKey].play();
-      alertLoopInterval = setInterval(() => {
+      if (audioCtx) {
         INSTRUMENT_SOUNDS[selectedSoundKey].play();
-      }, 1600);
+        alertLoopInterval = setInterval(() => {
+          INSTRUMENT_SOUNDS[selectedSoundKey].play();
+        }, 1600);
+      }
     }
 
     function stopLoopingAlertSound() {
@@ -697,6 +735,7 @@
       viewTimer.classList.add('hidden');
       viewStopwatch.classList.add('hidden'); viewStopwatch.classList.remove('flex');
 
+      headerBtnAddAlarm.classList.add('hidden'); 
       stopSwRenderLoop(); 
 
       if (targetTab === 'world') {
@@ -706,6 +745,7 @@
       } else if (targetTab === 'alarm') {
         tabAlarm.classList.add('text-orange-500'); tabAlarm.classList.remove('text-neutral-600');
         viewAlarm.classList.remove('hidden'); viewAlarm.classList.add('flex');
+        headerBtnAddAlarm.classList.remove('hidden'); 
         renderAlarmList();
       } else if (targetTab === 'stopwatch') {
         tabSW.classList.add('text-orange-500'); tabSW.classList.remove('text-neutral-600');
@@ -723,25 +763,22 @@
     tabSW.addEventListener('click', () => switchTab('stopwatch'));
     tabTimer.addEventListener('click', () => switchTab('timer'));
 
-    // 世界時計
+    // 世界時計 (24時間表記に完全同期)
     let worldClockInterval = null;
     function startWorldClockUpdate() {
       if (worldClockInterval) clearInterval(worldClockInterval);
       function update() {
         const now = new Date();
-        const options = { hour: '2-digit', minute: '2-digit', hour12: true };
+        const options = { hour: '2-digit', minute: '2-digit', hour12: false };
         
-        const tokyoStr = now.toLocaleTimeString('en-US', { ...options, timeZone: 'Asia/Tokyo' });
-        const cupertinoStr = now.toLocaleTimeString('en-US', { ...options, timeZone: 'America/Los_Angeles' });
-        const londonStr = now.toLocaleTimeString('en-US', { ...options, timeZone: 'Europe/London' });
-        const newyorkStr = now.toLocaleTimeString('en-US', { ...options, timeZone: 'America/New_York' });
+        const tokyoStr = now.toLocaleTimeString('ja-JP', { ...options, timeZone: 'Asia/Tokyo' });
+        const cupertinoStr = now.toLocaleTimeString('ja-JP', { ...options, timeZone: 'America/Los_Angeles' });
+        const londonStr = now.toLocaleTimeString('ja-JP', { ...options, timeZone: 'Europe/London' });
+        const newyorkStr = now.toLocaleTimeString('ja-JP', { ...options, timeZone: 'America/New_York' });
 
         function setCityTime(city, timeStr) {
-          const parts = timeStr.split(' ');
           const timeElem = document.getElementById(`world-time-${city}`);
-          const ampmElem = document.getElementById(`world-ampm-${city}`);
-          if (timeElem) timeElem.textContent = parts[0];
-          if (ampmElem) ampmElem.textContent = parts[1];
+          if (timeElem) timeElem.textContent = timeStr;
         }
 
         setCityTime('tokyo', tokyoStr);
@@ -755,6 +792,7 @@
 
     // ================= ALARM CONTROLLER (アラーム管理システム) =================
     let savedAlarms = [];
+    let selectedAlarmDays = [false, false, false, false, false, false, false]; // 月[0]〜日[6]
 
     function openAlarmAddMenu(event) {
       if (event) {
@@ -762,6 +800,13 @@
         event.preventDefault();
       }
       playHapticTick();
+
+      // 繰り返し曜日選択ボタンのスタイルをすべてオフにリセット
+      selectedAlarmDays = [false, false, false, false, false, false, false];
+      document.querySelectorAll('.alarm-day-btn').forEach(btn => {
+        btn.classList.remove('bg-orange-500', 'text-white');
+        btn.classList.add('bg-[#2c2c2e]', 'text-neutral-300');
+      });
       
       // 時間と分のセレクトボックスを初期化
       const hrSelect = document.getElementById('alarm-add-hour');
@@ -796,6 +841,7 @@
       inner.classList.add('translate-y-full');
     }
 
+    // アラーム保存処理 (繰り返し曜日配列を完全に記録)
     function saveNewAlarm() {
       const hr = document.getElementById('alarm-add-hour').value;
       const min = document.getElementById('alarm-add-minute').value;
@@ -803,7 +849,8 @@
       const newAlarm = {
         id: Date.now(),
         timeStr: `${String(hr).padStart(2, '0')}:${String(min).padStart(2, '0')}`,
-        active: true
+        active: true,
+        days: [...selectedAlarmDays] // 曜日配列のディープコピー
       };
 
       savedAlarms.push(newAlarm);
@@ -811,9 +858,33 @@
       renderAlarmList();
     }
 
+    // 繰り返し曜日配列を本物の日本語スケジュールテキストに翻訳するヘルパー関数
+    function getRepeatDaysText(daysArray) {
+      if (!daysArray) return '1回限り';
+      const dayNames = ['月', '火', '水', '木', '金', '土', '日'];
+      const selectedDays = [];
+      daysArray.forEach((selected, idx) => {
+        if (selected) {
+          selectedDays.push(dayNames[idx]);
+        }
+      });
+
+      if (selectedDays.length === 0) return '1回限り';
+      if (selectedDays.length === 7) return '毎日';
+      // 平日のみのチェック (月〜金がすべてtrue、土日だけがfalse)
+      if (selectedDays.length === 5 && daysArray[0] && daysArray[1] && daysArray[2] && daysArray[3] && daysArray[4] && !daysArray[5] && !daysArray[6]) return '平日';
+      // 週末のみのチェック (土日がtrue、それ以外がfalse)
+      if (selectedDays.length === 2 && daysArray[5] && daysArray[6] && !daysArray[0] && !daysArray[1] && !daysArray[2] && !daysArray[3] && !daysArray[4]) return '週末';
+      
+      return selectedDays.join(' ');
+    }
+
     function renderAlarmList() {
       const container = document.getElementById('alarm-list-container');
       const placeholder = document.getElementById('alarm-empty-placeholder');
+      
+      if (!container || !placeholder) return;
+      
       container.innerHTML = '';
 
       if (savedAlarms.length === 0) {
@@ -826,12 +897,13 @@
       }
 
       savedAlarms.forEach(alarm => {
+        const repeatText = getRepeatDaysText(alarm.days);
         const row = document.createElement('div');
         row.className = "flex justify-between items-center py-4 border-b border-neutral-900";
         row.innerHTML = `
           <div>
             <div class="text-5xl font-light tracking-tighter tabular-timer ${alarm.active ? 'text-neutral-200' : 'text-neutral-500'}">${alarm.timeStr}</div>
-            <div class="text-neutral-400 text-xs mt-1">アラーム</div>
+            <div class="text-neutral-400 text-xs mt-1">アラーム, ${repeatText}</div>
           </div>
           <div class="flex items-center gap-3">
             <div class="ios-switch ${alarm.active ? 'active' : ''}" onclick="toggleAlarmActive(${alarm.id}, this)">
@@ -944,8 +1016,6 @@
       }, 100);
     }
 
-    // image_cb370a.png と IMG_2545.png に完全準拠：アクティブ要素のみに文字単位を追加
-    // 時間は一桁（0, 1, 2…）、分・秒は二桁（00, 01…）を完璧再現
     function updatePickerVisuals(col, targetIdx, unit) {
       const items = col.querySelectorAll('.picker-val-item');
       const isHours = col.id === 'col-hours';
@@ -953,6 +1023,7 @@
         const numStr = isHours ? String(idx) : String(idx).padStart(2, '0');
         if (idx === targetIdx) {
           item.classList.add('active');
+          // 単位（時間、分、秒）を数字の直後に美しく結合
           item.textContent = `${numStr} ${unit}`;
           item.style.fontWeight = '500';
           item.style.color = '#ffffff';
@@ -976,7 +1047,6 @@
       }
     }
 
-    // 開始ボタンタップ
     tBtnStart.addEventListener('click', () => {
       initAudio();
       playHapticTick();
@@ -985,15 +1055,12 @@
       const currentLabelValue = tLabelInput.value || "タイマー";
       addTimerInstance(totalSecs, currentLabelValue);
       
-      // 履歴に保存
       registerHistoryEntry(totalSecs, currentLabelValue);
 
-      // 入力欄を優しくリセット
       tLabelInput.value = "タイマー";
       tLabelDisplay.textContent = "タイマー";
     });
 
-    // 複数タイマーインスタンス生成
     function addTimerInstance(seconds, label) {
       timerGlobalId++;
       const now = Date.now();
@@ -1011,15 +1078,12 @@
       startGlobalTimerTicker();
     }
 
-    // 稼働タイマー数に応じてレイアウトを決定する
     function updateTimerScreenLayout() {
       if (activeTimers.length === 0) {
-        // タイマーなし：作成用ピッカーを表示
         tPanelSetup.classList.remove('hidden');
         tPanelRunningSingle.classList.add('hidden');
         timersActiveContainer.classList.add('hidden');
       } else if (activeTimers.length === 1) {
-        // 単一タイマー稼働：クラシックなフルカウントサークル (IMG_0639.png 仕様)
         tPanelSetup.classList.add('hidden');
         tPanelRunningSingle.classList.remove('hidden');
         timersActiveContainer.classList.add('hidden');
@@ -1027,7 +1091,6 @@
         const single = activeTimers[0];
         document.getElementById('label-selected-sound-running').textContent = selectedSoundKey === 'radar' ? 'レーダー' : selectedSoundKey === 'chime' ? '美しいチャイム' : 'アップリフト';
         
-        // カウント一時停止などの初期状態
         if (single.state === 'running') {
           tBtnPauseResume.textContent = "一時停止";
           tBtnPauseResume.className = "ios-btn btn-orange-pause";
@@ -1038,17 +1101,14 @@
         
         refreshSingleTimerUI(single);
       } else {
-        // 複数タイマー稼働：iPadマルチタイマー仕様
-        tPanelSetup.classList.remove('hidden'); // 新規作成ピッカーを上に露出
-        tPanelRunningSingle.classList.add('hidden'); // 単体サークルは非表示
-        timersActiveContainer.classList.remove('hidden'); // 下部リストを表示
+        tPanelSetup.classList.remove('hidden'); 
+        tPanelRunningSingle.classList.add('hidden'); 
+        timersActiveContainer.classList.remove('hidden'); 
         renderActiveTimersList();
       }
     }
 
-    // 単体タイマービュー of カウント＆サークル表示
     function refreshSingleTimerUI(t) {
-      // 09:04:59 ではなく 9:04:59、04:59 ではなく 4:59 と最初のゼロを省く (iOS完全再現)
       const h = Math.floor(t.secsLeft / 3600);
       const m = Math.floor((t.secsLeft % 3600) / 60);
       const s = t.secsLeft % 60;
@@ -1061,24 +1121,20 @@
       }
       tCountdown.textContent = displayStr;
 
-      // 進行サークルの同期
       const strokeDash = 659.7;
       const progress = t.secsLeft / t.totalSecs;
       tRing.style.strokeDashoffset = strokeDash * (1 - progress);
 
-      // 終了予定時刻
       const eta = new Date(t.expectedFinishTime);
       const etaStr = `${String(eta.getHours()).padStart(2, '0')}:${String(eta.getMinutes()).padStart(2, '0')}`;
       tEta.textContent = etaStr;
 
-      // バグ修正：欠落していた要素へのNull安全アクセスを確保
       const runningTitleElem = document.getElementById('timer-running-title');
       if (runningTitleElem) {
         runningTitleElem.textContent = t.label;
       }
     }
 
-    // グローバルタイマー更新ループ
     function startGlobalTimerTicker() {
       if (timerTickerId) return;
       timerTickerId = setInterval(() => {
@@ -1098,14 +1154,12 @@
           }
         });
 
-        // 終了したタイマーを削除
         const prevCount = activeTimers.length;
         activeTimers = activeTimers.filter(t => t.state !== 'completed');
         if (activeTimers.length !== prevCount) {
           listChanged = true;
         }
 
-        // 描画更新
         if (activeTimers.length === 1) {
           refreshSingleTimerUI(activeTimers[0]);
         } else if (activeTimers.length > 1) {
@@ -1116,7 +1170,6 @@
           updateTimerScreenLayout();
         }
 
-        // PiPの更新
         updateActivePiP();
 
         if (activeTimers.length === 0) {
@@ -1134,7 +1187,6 @@
       startLoopingAlertSound();
     }
 
-    // 単体タイマーコントロール：キャンセル
     tBtnCancelActive.addEventListener('click', () => {
       playHapticTick();
       if (activeTimers.length === 1) {
@@ -1142,7 +1194,6 @@
       }
     });
 
-    // 単体タイマーコントロール：一時停止＆再開
     tBtnPauseResume.addEventListener('click', () => {
       if (activeTimers.length === 1) {
         toggleTimerState(activeTimers[0].id);
@@ -1158,7 +1209,6 @@
       }
     });
 
-    // 複数タイマーインスタンスリストを描画
     function renderActiveTimersList() {
       activeTimersList.innerHTML = '';
       activeTimers.forEach(t => {
@@ -1213,7 +1263,6 @@
       });
     }
 
-    // 一時停止・再開
     window.toggleTimerState = function(id) {
       playHapticTick();
       const t = activeTimers.find(x => x.id === id);
@@ -1230,7 +1279,6 @@
       updateTimerScreenLayout();
     };
 
-    // 削除
     window.removeTimerInstance = function(id) {
       playHapticTick();
       activeTimers = activeTimers.filter(x => x.id !== id);
@@ -1321,7 +1369,6 @@
       return activeTimers[0]; 
     }
 
-    // iPhone / Desktop のマルチ互換 PiP キャンバス描画 (極薄で最高に美しいタイポグラフィ)
     function drawPipCanvas() {
       if (!pipCtx) return;
 
@@ -1343,14 +1390,12 @@
       const cy = 300;
       const radius = 230;
 
-      // 1. 円形レール (極細スタイリッシュ仕様)
       pipCtx.beginPath();
       pipCtx.arc(cx, cy, radius, 0, 2 * Math.PI);
       pipCtx.strokeStyle = '#1c1c1e';
       pipCtx.lineWidth = 4;
       pipCtx.stroke();
 
-      // 2. グラデーションサークル
       if (currentTimer.totalSecs > 0) {
         const progress = currentTimer.secsLeft / currentTimer.totalSecs;
         const startAngle = -0.5 * Math.PI;
@@ -1364,7 +1409,6 @@
         pipCtx.stroke();
       }
 
-      // 3. 残り時間を描画 (極細 Inter フォントをPiP内にも美しく同期)
       const h = Math.floor(currentTimer.secsLeft / 3600);
       const m = Math.floor((currentTimer.secsLeft % 3600) / 60);
       const s = currentTimer.secsLeft % 60;
@@ -1388,12 +1432,10 @@
       
       pipCtx.fillText(displayStr, cx, cy - 20);
 
-      // 4. タイマーラベル
       pipCtx.fillStyle = '#8e8e93';
       pipCtx.font = '400 32px "Inter", -apple-system, sans-serif';
       pipCtx.fillText(currentTimer.label, cx, cy + 75);
 
-      // 5. 終了予定時刻
       const eta = new Date(currentTimer.expectedFinishTime);
       const etaStr = `${String(eta.getHours()).padStart(2, '0')}:${String(eta.getMinutes()).padStart(2, '0')}`;
       pipCtx.fillStyle = '#ff9500';
@@ -1405,7 +1447,6 @@
       drawPipCanvas();
     }
 
-    // iPhone (iOS Safari) と Desktop 双方で動くハイブリッドPiPトリガー
     async function triggerPictureInPicture() {
       initAudio();
       playHapticTick();
@@ -1418,7 +1459,6 @@
       const currentTimer = getPriorityTimer();
       if (!currentTimer) return;
 
-      // --- 方法 1: Document Picture-in-Picture API (iOS 17.2+ ＆ モダンブラウザ向け、リアルHTML描画) ---
       if (window.documentPictureInPicture) {
         try {
           const pipWindow = await window.documentPictureInPicture.requestWindow({
@@ -1426,18 +1466,15 @@
             height: 300,
           });
 
-          // 親ドキュメントのスタイルシートをPiP用ウィンドウへ注入
           document.querySelectorAll('style, link[rel="stylesheet"]').forEach((style) => {
             pipWindow.document.head.appendChild(style.cloneNode(true));
           });
           
-          // Google Fontsの読み込み
           const fontLink = document.createElement('link');
           fontLink.rel = 'stylesheet';
           fontLink.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700&display=swap';
           pipWindow.document.head.appendChild(fontLink);
 
-          // 美しいiOSウィジェットスタイルHTMLの展開
           pipWindow.document.body.innerHTML = `
             <div style="background-color: #000000; color: #ffffff; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;">
               <div style="text-align: center;">
@@ -1448,7 +1485,6 @@
             </div>
           `;
 
-          // 等幅フォントの微調整スタイルを追加
           const style = document.createElement('style');
           style.textContent = `
             body { background: #000000; margin: 0; padding: 0; overflow: hidden; }
@@ -1456,7 +1492,6 @@
           `;
           pipWindow.document.head.appendChild(style);
 
-          // 小窓のUI定時更新インターバル
           const intervalId = setInterval(() => {
             if (pipWindow.closed) {
               clearInterval(intervalId);
@@ -1492,7 +1527,6 @@
         }
       }
 
-      // --- 方法 2: iOS Safari & レガシー環境向け WebKit/Standard Video PiP フォールバック ---
       const hasStandardPiP = ('pictureInPictureEnabled' in document && document.pictureInPictureEnabled) || typeof pipVideo.requestPictureInPicture === 'function';
       const hasWebKitPiP = typeof pipVideo.webkitSetPresentationMode === 'function';
 
@@ -1511,12 +1545,10 @@
         if (hasStandardPiP) {
           await pipVideo.requestPictureInPicture();
         } else if (hasWebKitPiP) {
-          // iPhone (iOS Safari) はこちらが強力に動作します
           pipVideo.webkitSetPresentationMode("picture-in-picture");
         }
       } catch (err) {
         console.error("Video PiP failed:", err);
-        // iOS Safari向け最終手段
         try {
           if (pipVideo.webkitSetPresentationMode) {
             pipVideo.webkitSetPresentationMode("picture-in-picture");
@@ -1674,7 +1706,7 @@
       
       let lapDelta = currentTotal;
       if (swLaps.length > 0) {
-        const prevTotal = swLaps[0].totalTime;
+        const prevTotal = swLaps[0].totalTime; 
         lapDelta = currentTotal - prevTotal;
       }
 
@@ -1682,7 +1714,7 @@
       swLaps.unshift({
         num: lapNumber,
         lapTime: lapDelta,
-        totalTotal: currentTotal
+        totalTime: currentTotal 
       });
 
       renderLaps();
@@ -1843,6 +1875,23 @@
         initAudio();
       }, { once: true });
     };
+
+    // 繰り返し曜日設定のボタントグル設定
+    document.querySelectorAll('.alarm-day-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        playHapticTick();
+        const dayIdx = parseInt(btn.getAttribute('data-day'));
+        selectedAlarmDays[dayIdx] = !selectedAlarmDays[dayIdx];
+        
+        if (selectedAlarmDays[dayIdx]) {
+          btn.classList.remove('bg-[#2c2c2e]', 'text-neutral-300');
+          btn.classList.add('bg-orange-500', 'text-white');
+        } else {
+          btn.classList.remove('bg-orange-500', 'text-white');
+          btn.classList.add('bg-[#2c2c2e]', 'text-neutral-300');
+        }
+      });
+    });
   </script>
 
   <!-- PWA Install Handling -->
