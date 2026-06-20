@@ -45,13 +45,23 @@
       letter-spacing: -0.025em;
     }
 
-    /* 高級な等幅デジタルフォント表現（カーニングを詰め、絶対ブレを防ぐ） */
+    /* iOS純正の極薄かつ美しい数字表示 (等幅仕様でブレを完璧防止) */
+    .ios-timer-font {
+      font-family: 'Inter', -apple-system, sans-serif;
+      font-weight: 100;
+      font-size: 5.5rem; /* 本物同様の迫力と美しさ */
+      letter-spacing: -0.05em;
+      font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum" on;
+      line-height: 1;
+    }
+
     .tabular-timer {
       font-family: "Inter", "SF Pro Display", -apple-system, sans-serif;
       font-variant-numeric: tabular-nums;
       font-feature-settings: "tnum" on;
-      font-weight: 100; /* 超極薄に設定 */
-      letter-spacing: -0.05em; /* 文字間隔を本物同様にタイトに調整 */
+      font-weight: 100;
+      letter-spacing: -0.04em;
     }
 
     /* iOS 3D風ドラムロールピッカー */
@@ -223,7 +233,7 @@
     }
 
     /* スマートフォン・PWAスタンドアロン時用のレスポンシブ・セーフエリア指定 */
-    @media (max-width: 480px) {
+    @media (max-width: 639px) {
       .phone-container {
         width: 100% !important;
         height: 100% !important;
@@ -232,31 +242,30 @@
         box-shadow: none !important;
       }
       .safe-pt { padding-top: env(safe-area-inset-top, 24px); }
-      .safe-pb { padding-bottom: env(safe-area-inset-bottom, 12px); }
     }
-    @media (min-width: 481px) {
+    @media (min-width: 640px) {
       .safe-pt { padding-top: 24px; }
-      .safe-pb { padding-bottom: 20px; }
     }
   </style>
 </head>
 <body class="pc-backdrop flex items-center justify-center">
 
-  <!-- ================= PHONE DEVICE OUTER FRAME (PC画面でiPhoneフレームを描画して余白をカバー) ================= -->
-  <div class="phone-container relative w-[375px] h-[812px] bg-[#000000] rounded-[48px] border-[10px] border-[#1c1c1e] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] overflow-hidden flex flex-col justify-between transition-all duration-300">
+  <!-- ================= PHONE DEVICE OUTER FRAME (PC画面でiPhoneフレームを描画して余白を完全にカバー) ================= -->
+  <!-- 横幅は本物同様の比率、底辺余白バグはPWA・PCともに物理的に0にします -->
+  <div id="app-container" class="phone-container relative w-[412px] h-[846px] bg-[#000000] rounded-[48px] border-[10px] border-[#1c1c1e] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] overflow-hidden flex flex-col justify-between transition-all duration-300">
     
-    <!-- iPhoneノッチ（大画面時のみ視覚アクセントとして表示） -->
+    <!-- iPhoneノッチ（PCなどの大画面時のみ表示される本物のアクセント） -->
     <div class="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-7 bg-[#1c1c1e] rounded-b-2xl z-[99] hidden sm:block"></div>
 
-    <!-- ================= FIXED MAIN VIEWPORT (コンテンツ部分) ================= -->
-    <!-- ナビゲーションバーの上に重ならない高さを完璧に算出 -->
-    <div class="absolute inset-x-0 top-0 flex flex-col justify-between safe-pt" style="bottom: 74px;">
+    <!-- ================= FIXED MAIN VIEWPORT (コンテンツ表示部) ================= -->
+    <!-- 下部タブバー（高さ60px + env-bottom）の上にピタッと配置し、スクロール要素が下に突き抜けないようにします -->
+    <div class="absolute inset-x-0 top-0 flex flex-col justify-between safe-pt overflow-hidden" style="bottom: calc(60px + env(safe-area-inset-bottom, 8px));">
       
       <!-- ================= TOP HEADER ================= -->
       <header class="flex justify-between items-center px-6 pt-2 pb-1 flex-shrink-0">
         <div class="flex-1"></div>
         <!-- アラーム画面でのみ右上にプラスボタンを表示 -->
-        <button id="header-btn-add-alarm" class="hidden text-orange-500 hover:opacity-80 active:scale-95 transition-all" onclick="openAlarmAddMenu(event)">
+        <button id="header-btn-add-alarm" class="hidden text-orange-500 hover:opacity-80 active:scale-95 transition-all animate-fade-in" onclick="openAlarmAddMenu(event)">
           <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
         </button>
         <button id="pwa-install-btn" class="hidden text-orange-500 text-sm font-semibold flex items-center gap-1 bg-neutral-950 px-3 py-1.5 rounded-full border border-neutral-800">
@@ -400,7 +409,7 @@
                 <!-- タイマー稼働中用のラベル名 -->
                 <span id="timer-running-title" class="text-[#8e8e93] text-sm font-normal tracking-wide mb-1 select-none">タイマー</span>
                 <!-- 究極に美しく細いフォントで、ブレない残り時間表示 -->
-                <span id="timer-countdown" class="text-6xl font-thin tracking-tight tabular-timer text-white">4:59</span>
+                <span id="timer-countdown" class="ios-timer-font text-white">4:59</span>
                 <div class="flex items-center gap-1 text-[15px] text-[#8e8e93] mt-2 font-normal">
                   <!-- ベルアイコン -->
                   <svg class="w-3.5 h-3.5 fill-current text-[#8e8e93]" viewBox="0 0 24 24">
@@ -458,8 +467,8 @@
             <!-- Digital Face -->
             <div id="sw-digital-face" class="flex flex-col items-center justify-center">
               <div class="text-7xl font-extralight tracking-tighter tabular-timer flex items-baseline select-none">
-                <span id="sw-time-main" class="tabular-timer">00:00.</span>
-                <span id="sw-time-ms" class="text-5xl font-extralight text-neutral-300 ml-0.5 tabular-timer">00</span>
+                <span id="sw-time-main" style="font-weight: 100; font-family: 'Inter', sans-serif;">00:00.</span>
+                <span id="sw-time-ms" style="font-weight: 100; font-family: 'Inter', sans-serif;" class="text-[4rem]">00</span>
               </div>
               <span class="text-xs text-neutral-500 mt-4 uppercase tracking-widest font-semibold">タップで盤面を切り替え</span>
             </div>
@@ -515,7 +524,8 @@
       </main>
     </div>
 
-    <!-- ================= TABS NAVIGATION (絶対配置ボトム吸着により、不自然な余白バグを完璧に解消) ================= -->
+    <!-- ================= TABS NAVIGATION (絶対配置ボトム完全密着吸着) ================= -->
+    <!-- これにより、PC画面でもスマホ実機でも、タブバーの下に不自然な黒い隙間は物理的に発生しなくなります。 -->
     <nav class="absolute bottom-0 inset-x-0 h-16 bg-[#161616]/95 backdrop-blur-xl border-t border-white/10 flex justify-around items-center text-[10px] safe-pb z-[98]">
       <button id="tab-world" class="flex flex-col items-center text-neutral-600 focus:outline-none transition-colors duration-200">
         <svg class="w-[23px] h-[23px] mb-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -633,7 +643,7 @@
           audioCtx.resume();
         }
       } catch (e) {
-        console.warn("AudioContext initialization bypassed safely for PWA standard:", e);
+        console.warn("AudioContext initialization bypassed safely:", e);
       }
     }
 
@@ -829,14 +839,12 @@
       }
       playHapticTick();
 
-      // 繰り返し曜日選択ボタンのスタイルをすべてオフにリセット
       selectedAlarmDays = [false, false, false, false, false, false, false];
       document.querySelectorAll('.alarm-day-btn').forEach(btn => {
         btn.classList.remove('bg-orange-500', 'text-white');
         btn.classList.add('bg-[#2c2c2e]', 'text-neutral-300');
       });
       
-      // 時間と分のセレクトボックスを初期化
       const hrSelect = document.getElementById('alarm-add-hour');
       const minSelect = document.getElementById('alarm-add-minute');
       hrSelect.innerHTML = '';
@@ -869,7 +877,6 @@
       inner.classList.add('translate-y-full');
     }
 
-    // アラーム保存処理
     function saveNewAlarm() {
       const hr = document.getElementById('alarm-add-hour').value;
       const min = document.getElementById('alarm-add-minute').value;
@@ -994,7 +1001,7 @@
     const activeTimersList = document.getElementById('active-timers-list');
 
     function buildPickers() {
-      populateScroller('scroller-hours', 24, true); // 時間は一桁
+      populateScroller('scroller-hours', 24, true); 
       populateScroller('scroller-minutes', 60, false);
       populateScroller('scroller-seconds', 60, false);
 
@@ -1048,7 +1055,6 @@
         const numStr = isHours ? String(idx) : String(idx).padStart(2, '0');
         if (idx === targetIdx) {
           item.classList.add('active');
-          // 単位（時間、分、秒）を数字の直後に美しく結合
           item.textContent = `${numStr} ${unit}`;
           item.style.fontWeight = '500';
           item.style.color = '#ffffff';
@@ -1378,7 +1384,7 @@
       });
     }
 
-    // ================= PICTURE-IN-PICTURE (極上PiPデザインウィジェット) =================
+    // ================= PICTURE-IN-PICTURE =================
     const pipCanvas = document.getElementById('pip-canvas');
     const pipCtx = pipCanvas.getContext('2d');
     const pipVideo = document.getElementById('pip-video');
@@ -1556,7 +1562,7 @@
       const hasWebKitPiP = typeof pipVideo.webkitSetPresentationMode === 'function';
 
       if (!hasStandardPiP && !hasWebKitPiP) {
-        alert("お使いのWebブラウザはPicture-in-Picture機能に対応していません。SafariかChromeの最新版をご利用ください。");
+        alert("お使いのWebブラウザはPicture-in-Picture機能に対応していません。");
         return;
       }
 
