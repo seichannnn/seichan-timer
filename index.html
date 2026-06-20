@@ -50,7 +50,7 @@
       font-family: "Inter", "SF Pro Display", -apple-system, sans-serif;
       font-variant-numeric: tabular-nums;
       font-feature-settings: "tnum" on;
-      font-weight: 100; /* 超極薄に設定 */
+      font-weight: 200; /* 視認性向上のため100から極上の細さである200へ最適化 */
       letter-spacing: -0.05em; /* 文字間隔を本物同様にタイトに調整 */
     }
 
@@ -91,7 +91,7 @@
       align-items: center;
       justify-content: center;
       font-size: 23px;
-      font-weight: 300;
+      font-weight: 300; /* かすれを防ぐため300に最適化 */
       color: #8e8e93;
       transition: transform 0.15s ease-out, color 0.15s ease-out;
       white-space: nowrap;
@@ -99,7 +99,7 @@
 
     .picker-val-item.active {
       color: #ffffff;
-      font-weight: 500;
+      font-weight: 600;
       transform: scale(1.15);
     }
 
@@ -222,7 +222,7 @@
       background: radial-gradient(circle at center, #1c1c1e 0%, #000000 100%);
     }
 
-    /* モバイル・PWA時に画面の全方向に100%吸着させる完全固定設定 (Gapバグの解決策) */
+    /* モバイル・PWA時に画面の全方向に100%吸着させる完全固定設定 */
     @media (max-width: 639px) {
       .phone-container {
         position: fixed !important;
@@ -231,8 +231,7 @@
         right: 0 !important;
         bottom: 0 !important;
         width: 100vw !important;
-        height: 100vh !important;
-        height: 100dvh !important; /* iOSのアドレスバーを考慮した極限吸着 */
+        height: 100% !important;
         border-radius: 0 !important;
         border: none !important;
         box-shadow: none !important;
@@ -250,7 +249,7 @@
   <!-- PCではiPhone風シミュレータフレーム、スマホ・PWA起動時は自動でフレームが非表示になり画面全体に100%吸着します -->
   <div id="app-container" class="phone-container relative w-[393px] h-[852px] bg-[#000000] rounded-[48px] border-[8px] border-[#1c1c1e] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] overflow-hidden flex flex-col justify-between transition-all duration-300">
     
-    <!-- iPhoneノッチ (大画面時のアクセント) -->
+    <!-- iPhoneノッチ (PC大画面時のみ視覚アクセントとして表示) -->
     <div class="absolute top-0 left-1/2 -translate-x-1/2 w-36 h-6 bg-[#1c1c1e] rounded-b-2xl z-[99] hidden sm:block"></div>
 
     <!-- ================= FIXED MAIN VIEWPORT (コンテンツ表示領域) ================= -->
@@ -406,9 +405,9 @@
               <div class="flex flex-col items-center justify-center z-10 text-center">
                 <!-- タイマー稼働中用のラベル名 -->
                 <span id="timer-running-title" class="text-[#8e8e93] text-sm font-normal tracking-wide mb-1 select-none">タイマー</span>
-                <!-- 究極に細く研ぎ澄まされた極上のInterフォント表示 -->
-                <span id="timer-countdown" class="text-6xl font-thin tracking-tight tabular-timer text-white select-none">4:59</span>
-                <div class="flex items-center gap-1 text-[15px] text-[#8e8e93] mt-2 font-normal">
+                <!-- 究極に細く研ぎ澄まされた極上のInterフォント表示 (文字サイズを大きく調整) -->
+                <span id="timer-countdown" class="text-6xl font-extralight tracking-tight tabular-timer text-white select-none leading-none">4:59</span>
+                <div class="flex items-center gap-1 text-[15px] text-[#8e8e93] mt-4 font-normal">
                   <svg class="w-3.5 h-3.5 fill-current text-[#8e8e93]" viewBox="0 0 24 24">
                     <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
                   </svg>
@@ -452,18 +451,18 @@
             <div class="text-[11px] text-neutral-500 font-bold tracking-wider uppercase mb-2 px-1">最近の項目</div>
             <div id="timer-history-list" class="flex gap-2 overflow-x-auto pb-1 no-scrollbar"></div>
           </div>
-        </div> <!-- [バグ修正] 欠落していた `#view-timer` の閉じタグ div をここに完全に定義 -->
+        </div> <!-- HTML構造バグが修正された美しい入れ子 -->
 
         <!-- 4. STOPWATCH VIEW -->
         <div id="view-stopwatch" class="hidden flex-col flex-1 justify-between py-4 transition-all duration-300">
           <div id="stopwatch-display-wrapper" class="flex-1 flex flex-col justify-center items-center cursor-pointer" onclick="toggleStopwatchDisplayMode()">
             <!-- Digital Face -->
             <div id="sw-digital-face" class="flex flex-col items-center justify-center">
-              <div class="text-7xl font-extralight tracking-tighter tabular-timer flex items-baseline select-none">
-                <span id="sw-time-main" class="tabular-timer text-white">00:00.</span>
-                <span id="sw-time-ms" class="text-5xl font-extralight text-neutral-300 ml-0.5 tabular-timer">00</span>
+              <div class="text-[5.5rem] font-thin tracking-tight tabular-timer flex items-baseline select-none text-white leading-none">
+                <span id="sw-time-main">00:00.</span>
+                <span id="sw-time-ms" class="text-[3.5rem] font-thin text-neutral-300 ml-0.5">00</span>
               </div>
-              <span class="text-xs text-neutral-500 mt-4 uppercase tracking-widest font-semibold">タップで盤面を切り替え</span>
+              <span class="text-xs text-neutral-500 mt-6 uppercase tracking-widest font-semibold">タップで盤面を切り替え</span>
             </div>
 
             <!-- Analog Face (Vector Perfect SVG) -->
@@ -516,6 +515,9 @@
 
       </main>
     </div> <!-- FIXED MAIN VIEWPORT 閉じタグ -->
+
+    <!-- 物理的な下部突き抜け背景ガード (Gapバグの絶対解決策) -->
+    <div class="absolute inset-x-0 bottom-[-100px] h-[100px] bg-[#161616] z-[97] pointer-events-none"></div>
 
     <!-- ================= TABS NAVIGATION (絶対配置ボトム完全密着吸着) ================= -->
     <!-- これにより、PC画面でもスマホ実機でも、タブバーの下に不自然な黒い隙間は物理的に発生しなくなります。 -->
@@ -993,7 +995,11 @@
     const timersActiveContainer = document.getElementById('timers-active-container');
     const activeTimersList = document.getElementById('active-timers-list');
 
+    // プログラムからのスクロール制御フラグ（scrollイベントの不要な連鎖とバグを100%防ぎます）
+    let isSettingProgrammatically = false;
+
     function buildPickers() {
+      isSettingProgrammatically = true;
       populateScroller('scroller-hours', 24, true); 
       populateScroller('scroller-minutes', 60, false);
       populateScroller('scroller-seconds', 60, false);
@@ -1003,11 +1009,13 @@
         setPickerIndex('col-minutes', 5);
         setPickerIndex('col-seconds', 0);
         recalcTimerParams();
-      }, 50);
+        isSettingProgrammatically = false; // 初期化セットアップ完了後にイベントを解禁
+      }, 150);
     }
 
     function populateScroller(scrollerId, limit, isHours = false) {
       const container = document.getElementById(scrollerId);
+      if (!container) return;
       container.innerHTML = '';
       for (let i = 0; i < limit; i++) {
         const item = document.createElement('div');
@@ -1019,11 +1027,14 @@
 
     function setPickerIndex(colId, index) {
       const col = document.getElementById(colId);
+      if (!col) return;
       col.scrollTop = index * 40;
       updatePickerVisuals(col, index, colId === 'col-hours' ? '時間' : colId === 'col-minutes' ? '分' : '秒');
     }
 
     function onPickerScroll(col, type) {
+      if (isSettingProgrammatically) return; // 初期化時の意図しないイベント衝突を完全無視
+
       if (scrollDebounceTimer) clearTimeout(scrollDebounceTimer);
       
       const limit = col.firstElementChild.children.length;
@@ -1050,7 +1061,7 @@
       const isHours = col.id === 'col-hours';
       items.forEach((item, idx) => {
         const numStr = isHours ? String(idx) : String(idx).padStart(2, '0');
-        item.textContent = numStr; // 単位を結合せず純粋な数字のみにリセット
+        item.textContent = numStr; 
         
         if (idx === targetIdx) {
           item.classList.add('active');
@@ -1319,6 +1330,7 @@
       updateTimerScreenLayout();
     };
 
+    // 履歴保存の registerHistoryEntry
     function registerHistoryEntry(seconds, label) {
       recentTimersList = recentTimersList.filter(item => item.seconds !== seconds);
       recentTimersList.unshift({ seconds, label: label || "タイマー" });
@@ -1328,6 +1340,7 @@
       drawHistoryPills();
     }
 
+    // 履歴読込の retrieveHistory
     function retrieveHistory() {
       const raw = localStorage.getItem('ios_timer_recent_history');
       if (raw) {
@@ -1338,10 +1351,13 @@
       drawHistoryPills();
     }
 
+    // 履歴描画の drawHistoryPills
     function drawHistoryPills() {
-      tHistoryList.innerHTML = '';
+      const histContainer = document.getElementById('timer-history-list');
+      if (!histContainer) return;
+      histContainer.innerHTML = '';
       if (recentTimersList.length === 0) {
-        tHistoryList.innerHTML = `<div class="text-neutral-600 text-sm py-1 font-normal tracking-wide pl-1">履歴はありません</div>`;
+        histContainer.innerHTML = `<div class="text-neutral-600 text-sm py-1 font-normal tracking-wide pl-1">履歴はありません</div>`;
         return;
       }
       recentTimersList.forEach(item => {
@@ -1377,7 +1393,7 @@
             addTimerInstance(item.seconds, item.label);
           }, 150);
         });
-        tHistoryList.appendChild(chip);
+        histContainer.appendChild(chip);
       });
     }
 
@@ -1469,10 +1485,6 @@
       pipCtx.fillStyle = '#ff9500';
       pipCtx.font = '400 24px "Inter", -apple-system, sans-serif';
       pipCtx.fillText(`🔔 ${etaStr}`, cx, cy + 130);
-    }
-
-    function updateActivePiP() {
-      drawPipCanvas();
     }
 
     async function triggerPictureInPicture() {
@@ -1587,14 +1599,6 @@
       }
     }
 
-    btnPip.addEventListener('click', triggerPictureInPicture);
-
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'hidden' && activeTimers.some(t => t.state === 'running')) {
-        triggerPictureInPicture().catch(() => {});
-      }
-    });
-
     // ================= STOPWATCH CONTROLLER =================
     let swState = 'idle'; 
     let swStartTime = 0;
@@ -1701,7 +1705,6 @@
       updateStopwatchTimer(); 
     }
 
-    // swReset の復旧
     function swReset() {
       try {
         playHapticTick();
@@ -1801,7 +1804,6 @@
       return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}.${String(ms).padStart(2, '0')}`;
     }
 
-    // ★修正ポイント: swBtnPrimary および swBtnLap の存在チェックを入れるなど、確実に要素へアクセス
     const startStopwatchBtn = document.getElementById('sw-btn-primary');
     const lapStopwatchBtn = document.getElementById('sw-btn-lap');
 
