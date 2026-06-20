@@ -1,0 +1,22 @@
+{
+  "short_name": "時計",
+  "name": "iOSスタイル・クロック",
+  "description": "iPhone純正クロックアプリのディテールを徹底再現したタイマー＆ストップウォッチPWA",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "index.html",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "display": "standalone",
+  "orientation": "portrait"
+}

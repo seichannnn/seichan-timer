@@ -1,0 +1,1548 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>時計</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- iOS Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="時計">
+  <link rel="apple-touch-icon" href="icon-192.png">
+
+  <style>
+    /* iOSシステムフォントスタックの最適化 */
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "SF UI Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      background-color: #000000;
+      color: #ffffff;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      overflow: hidden;
+      letter-spacing: -0.015em;
+    }
+
+    /* 数字の幅を完全に等幅にしてカウント時のブレを完全に防ぐ */
+    .tabular-timer {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+      font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum" on;
+      letter-spacing: -0.02em;
+    }
+
+    /* iOS 3Dドラムロールピッカー */
+    .picker-viewport {
+      height: 200px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #000000;
+    }
+
+    .picker-column {
+      width: 54px;
+      height: 200px;
+      position: relative;
+      overflow-y: scroll;
+      scroll-snap-type: y mandatory;
+      scrollbar-width: none;
+      z-index: 2;
+    }
+    .picker-column::-webkit-scrollbar {
+      display: none;
+    }
+
+    .picker-scroller {
+      padding-top: 80px;
+      padding-bottom: 80px;
+    }
+
+    .picker-val-item {
+      height: 40px;
+      line-height: 40px;
+      scroll-snap-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 23px;
+      font-weight: 400;
+      color: #8e8e93;
+      transition: transform 0.15s ease-out, color 0.15s ease-out;
+    }
+
+    .picker-val-item.active {
+      color: #ffffff;
+      font-weight: 600;
+      transform: scale(1.15);
+    }
+
+    /* iOS風ピッカーの上下グラデーションとインディケータ */
+    .picker-overlay-top {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 80px;
+      background: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.7) 60%, rgba(0,0,0,0) 100%);
+      pointer-events: none;
+      z-index: 10;
+    }
+    .picker-overlay-bottom {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 80px;
+      background: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0.7) 60%, rgba(0,0,0,0) 100%);
+      pointer-events: none;
+      z-index: 10;
+    }
+    .picker-center-indicator {
+      position: absolute;
+      top: 80px;
+      left: 8px;
+      right: 8px;
+      height: 40px;
+      border-top: 0.5px solid rgba(255, 255, 255, 0.15);
+      border-bottom: 0.5px solid rgba(255, 255, 255, 0.15);
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    /* iOS丸型ボタン */
+    .ios-btn {
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      font-weight: 500;
+      transition: background-color 0.12s ease, transform 0.05s ease;
+      position: relative;
+    }
+    .ios-btn:active {
+      transform: scale(0.95);
+    }
+    .ios-btn::after {
+      content: '';
+      position: absolute;
+      inset: 2px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(0, 0, 0, 0.35);
+    }
+
+    .btn-gray-active {
+      background-color: #333333;
+      color: #ffffff;
+    }
+    .btn-gray-disabled {
+      background-color: #151517;
+      color: #555555;
+    }
+    .btn-green-start {
+      background-color: #082411;
+      color: #2fdf5a;
+    }
+    .btn-red-stop {
+      background-color: #32080a;
+      color: #ff3b30;
+    }
+    .btn-orange-pause {
+      background-color: #331400;
+      color: #ff9500;
+    }
+
+    /* 円形プログレスバーのSVGアニメーション */
+    .progress-ring-circle {
+      transition: stroke-dashoffset 0.1s linear;
+      transform: rotate(-90deg);
+      transform-origin: 50% 50%;
+    }
+
+    /* iOSスタイル スイッチトグル */
+    .ios-switch {
+      width: 51px;
+      height: 31px;
+      background-color: #2c2c2e;
+      border-radius: 100px;
+      position: relative;
+      transition: background-color 0.2s ease;
+      cursor: pointer;
+    }
+    .ios-switch.active {
+      background-color: #34c759;
+    }
+    .ios-switch-handle {
+      width: 27px;
+      height: 27px;
+      background-color: #ffffff;
+      border-radius: 50%;
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+      box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+    }
+    .ios-switch.active .ios-switch-handle {
+      transform: translateX(20px);
+    }
+
+    /* スクロールバー非表示 */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    .safe-pt { padding-top: env(safe-area-inset-top, 24px); }
+    .safe-pb { padding-bottom: env(safe-area-inset-bottom, 20px); }
+  </style>
+</head>
+<body class="flex flex-col h-[100dvh] justify-between safe-pt safe-pb">
+
+  <!-- ================= TOP HEADER (左上のタイトルを非表示) ================= -->
+  <header class="flex justify-between items-center px-6 pt-4 pb-2">
+    <!-- タイトルテキストを非表示にするため、空のdivでスペースを確保 -->
+    <div id="app-title" class="text-3xl font-bold tracking-tight hidden"></div>
+    <div class="flex-1"></div>
+    
+    <button id="pwa-install-btn" class="hidden text-orange-500 text-sm font-semibold flex items-center gap-1 bg-neutral-950 px-3 py-1.5 rounded-full border border-neutral-800">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+      <span>ホームに追加</span>
+    </button>
+  </header>
+
+  <!-- ================= MAIN VIEWS ================= -->
+  <main id="main-content" class="flex-1 flex flex-col justify-center px-6 overflow-hidden relative">
+    
+    <!-- 1. WORLD CLOCK VIEW -->
+    <div id="view-world" class="hidden flex-col flex-1 justify-start py-4 overflow-y-auto no-scrollbar transition-all duration-300">
+      <div class="divide-y divide-neutral-800" id="world-clock-list">
+        <!-- 東京 -->
+        <div class="flex justify-between items-center py-4">
+          <div>
+            <div class="text-neutral-400 text-xs font-normal">今日, +0時間</div>
+            <div class="text-white text-2xl font-medium mt-0.5">東京</div>
+          </div>
+          <div class="text-right">
+            <span id="world-time-tokyo" class="text-5xl font-light tracking-tighter tabular-timer">00:00</span>
+            <span id="world-ampm-tokyo" class="text-lg font-light ml-1">AM</span>
+          </div>
+        </div>
+        <!-- クパチーノ -->
+        <div class="flex justify-between items-center py-4">
+          <div>
+            <div class="text-neutral-400 text-xs font-normal" id="world-diff-cupertino">今日, -17時間</div>
+            <div class="text-white text-2xl font-medium mt-0.5">クパチーノ</div>
+          </div>
+          <div class="text-right">
+            <span id="world-time-cupertino" class="text-5xl font-light tracking-tighter tabular-timer">00:00</span>
+            <span id="world-ampm-cupertino" class="text-lg font-light ml-1">AM</span>
+          </div>
+        </div>
+        <!-- ロンドン -->
+        <div class="flex justify-between items-center py-4">
+          <div>
+            <div class="text-neutral-400 text-xs font-normal" id="world-diff-london">今日, -8時間</div>
+            <div class="text-white text-2xl font-medium mt-0.5">ロンドン</div>
+          </div>
+          <div class="text-right">
+            <span id="world-time-london" class="text-5xl font-light tracking-tighter tabular-timer">00:00</span>
+            <span id="world-ampm-london" class="text-lg font-light ml-1">AM</span>
+          </div>
+        </div>
+        <!-- ニューヨーク -->
+        <div class="flex justify-between items-center py-4">
+          <div>
+            <div class="text-neutral-400 text-xs font-normal" id="world-diff-newyork">今日, -13時間</div>
+            <div class="text-white text-2xl font-medium mt-0.5">ニューヨーク</div>
+          </div>
+          <div class="text-right">
+            <span id="world-time-newyork" class="text-5xl font-light tracking-tighter tabular-timer">00:00</span>
+            <span id="world-ampm-newyork" class="text-lg font-light ml-1">AM</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. ALARM VIEW (デフォルトアラームを削除したクリーン表示) -->
+    <div id="view-alarm" class="hidden flex-col flex-1 justify-center items-center py-4 transition-all duration-300">
+      <div class="text-center">
+        <svg class="w-16 h-16 text-neutral-700 mx-auto mb-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+          <circle cx="12" cy="13" r="8" />
+          <path d="M12 9v4l2 2" />
+          <path d="M5 3L2 6" />
+          <path d="M19 3l3 3" />
+        </svg>
+        <div class="text-neutral-500 text-lg font-medium">アラームはありません</div>
+        <p class="text-neutral-600 text-sm mt-1">下のボタンなどから追加が可能です</p>
+      </div>
+    </div>
+
+    <!-- 3. TIMER VIEW -->
+    <div id="view-timer" class="flex flex-col flex-1 justify-between py-4 transition-all duration-300">
+      
+      <!-- A. Picker Wheel View -->
+      <div id="timer-setup-panel" class="flex-1 flex flex-col justify-center">
+        <div class="picker-viewport w-full max-w-sm mx-auto">
+          <div class="picker-center-indicator"></div>
+          <div class="picker-overlay-top"></div>
+          <div class="picker-overlay-bottom"></div>
+
+          <div class="flex justify-center items-center w-full h-full">
+            <!-- Hours -->
+            <div class="flex items-center relative h-[200px]">
+              <div id="col-hours" class="picker-column" onscroll="onPickerScroll(this, 'hours')">
+                <div class="picker-scroller" id="scroller-hours"></div>
+              </div>
+              <span class="text-[15px] font-semibold text-neutral-400 ml-1.5 select-none pointer-events-none h-[40px] flex items-center">時間</span>
+            </div>
+
+            <!-- Minutes -->
+            <div class="flex items-center relative h-[200px] ml-5">
+              <div id="col-minutes" class="picker-column" onscroll="onPickerScroll(this, 'minutes')">
+                <div class="picker-scroller" id="scroller-minutes"></div>
+              </div>
+              <span class="text-[15px] font-semibold text-neutral-400 ml-1.5 select-none pointer-events-none h-[40px] flex items-center">分</span>
+            </div>
+
+            <!-- Seconds -->
+            <div class="flex items-center relative h-[200px] ml-5">
+              <div id="col-seconds" class="picker-column" onscroll="onPickerScroll(this, 'seconds')">
+                <div class="picker-scroller" id="scroller-seconds"></div>
+              </div>
+              <span class="text-[15px] font-semibold text-neutral-400 ml-1.5 select-none pointer-events-none h-[40px] flex items-center">秒</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Details Options Box -->
+        <div class="mt-8 max-w-sm mx-auto w-full space-y-2 px-2">
+          <div class="flex justify-between items-center bg-[#1c1c1e] p-3.5 rounded-xl cursor-pointer active:brightness-90" onclick="openLabelMenu(event)">
+            <span class="text-neutral-200 text-[16px]">ラベル</span>
+            <div class="flex items-center gap-1 text-orange-500">
+              <span id="label-display" class="text-[16px]">タイマー</span>
+              <svg class="w-4 h-4 text-neutral-600" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </div>
+          </div>
+          <div class="flex justify-between items-center bg-[#1c1c1e] p-3.5 rounded-xl cursor-pointer active:brightness-90" onclick="openSoundMenu(event)">
+            <span class="text-neutral-200 text-[16px]">終了時</span>
+            <div class="flex items-center gap-1 text-neutral-500">
+              <span id="label-selected-sound" class="text-[16px]">レーダー (デフォルト)</span>
+              <svg class="w-4 h-4 text-neutral-600" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- B. Running Graphic Progress View -->
+      <div id="timer-running-panel" class="hidden flex-1 flex flex-col justify-center items-center">
+        <div class="relative w-72 h-72 md:w-80 md:h-80 flex items-center justify-center">
+          <svg class="absolute top-0 left-0 w-full h-full" viewBox="0 0 220 220">
+            <circle cx="110" cy="110" r="102" fill="transparent" stroke="#1c1c1e" stroke-width="2" />
+            <circle id="timer-ring" class="progress-ring-circle" cx="110" cy="110" r="102" fill="transparent" stroke="#ff9500" stroke-width="2.5" stroke-dasharray="640.88" stroke-dashoffset="0" stroke-linecap="round" />
+          </svg>
+          <div class="flex flex-col items-center justify-center z-10 text-center">
+            <span id="timer-running-title" class="text-neutral-400 text-sm font-normal tracking-wide mb-1">タイマー</span>
+            <span id="timer-countdown" class="text-6xl font-light tracking-tighter tabular-timer">00:00</span>
+            <div class="flex items-center gap-1 text-sm text-neutral-500 mt-3 font-medium">
+              <svg class="w-4 h-4 text-neutral-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v2c-3 0-5 2.5-5 5v4.158c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+              <span id="timer-finish-eta">--:--</span>
+            </div>
+            
+            <!-- Picture-in-Picture (小窓表示起動用ボタン) -->
+            <button id="btn-pip" class="mt-5 px-4 py-2 bg-[#1c1c1e] hover:bg-[#2c2c2e] border border-neutral-800 rounded-full text-xs font-semibold text-orange-500 flex items-center gap-1.5 active:scale-95 transition-all shadow-md">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0v8m0-8L8 15M4 19h4a2 2 0 002-2v-4a2 2 0 00-2-2H4a2 2 0 00-2 2v4a2 2 0 002 2z"/>
+              </svg>
+              <span>小窓で表示 (PiP)</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- C. Bottom Controls (Timer) -->
+      <div class="flex justify-between items-center px-4 max-w-sm mx-auto w-full pt-6">
+        <button id="timer-btn-cancel" disabled class="ios-btn btn-gray-disabled">キャンセル</button>
+        <button id="timer-btn-primary" class="ios-btn btn-green-start">開始</button>
+      </div>
+
+      <!-- D. History Box -->
+      <div id="timer-history-container" class="max-w-sm mx-auto w-full mt-6">
+        <div class="text-[12px] text-neutral-500 font-bold tracking-wider uppercase mb-2">最近の項目</div>
+        <div id="timer-history-list" class="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+          <!-- 履歴チップ -->
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. STOPWATCH VIEW -->
+    <div id="view-stopwatch" class="hidden flex-col flex-1 justify-between py-4 transition-all duration-300">
+      
+      <!-- A. Visual Displays -->
+      <div id="stopwatch-display-wrapper" class="flex-1 flex flex-col justify-center items-center cursor-pointer" onclick="toggleStopwatchDisplayMode()">
+        
+        <!-- Digital Face -->
+        <div id="sw-digital-face" class="flex flex-col items-center justify-center">
+          <div class="text-7xl font-extralight tracking-tighter tabular-timer flex items-baseline select-none">
+            <span id="sw-time-main" class="tabular-timer">00:00.</span>
+            <span id="sw-time-ms" class="text-5xl font-extralight text-neutral-300 ml-0.5 tabular-timer">00</span>
+          </div>
+          <span class="text-xs text-neutral-500 mt-4 uppercase tracking-widest font-semibold">タップで盤面を切り替え</span>
+        </div>
+
+        <!-- Analog Face (Vector Perfect SVG) -->
+        <div id="sw-analog-face" class="hidden relative w-72 h-72 md:w-80 md:h-80 flex items-center justify-center mx-auto">
+          <svg id="sw-analog-svg" class="w-full h-full max-w-[280px] max-h-[280px]" viewBox="0 0 200 200">
+            <!-- Background Outer Dial -->
+            <circle cx="100" cy="100" r="96" fill="#000000" stroke="#1c1c1e" stroke-width="2"/>
+            
+            <!-- Dial Markings -->
+            <g stroke="#2c2c2e" stroke-width="1" stroke-linecap="round">
+              <line x1="100" y1="8" x2="100" y2="16" stroke="#ffffff" stroke-width="1.5"/>
+              <line x1="100" y1="184" x2="100" y2="192" stroke="#555555"/>
+              <line x1="8" y1="100" x2="16" y2="100" stroke="#555555"/>
+              <line x1="184" y1="100" x2="192" y2="100" stroke="#555555"/>
+              <!-- Diagonals -->
+              <line x1="164.6" y1="164.6" x2="159" y2="159"/>
+              <line x1="35.4" y1="35.4" x2="41" y2="41"/>
+              <line x1="164.6" y1="35.4" x2="159" y2="41"/>
+              <line x1="35.4" y1="164.6" x2="41" y2="159"/>
+            </g>
+
+            <!-- Major Numbers -->
+            <text x="100" y="28" font-size="12" font-weight="600" fill="#aeaeae" text-anchor="middle">60</text>
+            <text x="100" y="182" font-size="12" font-weight="600" fill="#aeaeae" text-anchor="middle">30</text>
+            <text x="178" y="104" font-size="12" font-weight="600" fill="#aeaeae" text-anchor="middle">15</text>
+            <text x="22" y="104" font-size="12" font-weight="600" fill="#aeaeae" text-anchor="middle">45</text>
+
+            <!-- Chrono Sub-dial (Minutes) at Top -->
+            <g>
+              <circle cx="100" cy="62" r="22" fill="none" stroke="#1c1c1e" stroke-width="1"/>
+              <line x1="100" y1="40" x2="100" y2="44" stroke="#555555" stroke-width="1"/>
+              <line x1="100" y1="80" x2="100" y2="84" stroke="#555555" stroke-width="1"/>
+              <line x1="78" y1="62" x2="82" y2="62" stroke="#555555" stroke-width="1"/>
+              <line x1="118" y1="62" x2="122" y2="62" stroke="#555555" stroke-width="1"/>
+              <text x="100" y="52" font-size="7" fill="#8e8e93" text-anchor="middle">30</text>
+              
+              <!-- Minutes Sub-Hand -->
+              <line id="svg-hand-sub-minutes" x1="100" y1="62" x2="100" y2="44" stroke="#ff9500" stroke-width="1.5" stroke-linecap="round" transform="rotate(0, 100, 62)"/>
+              <circle cx="100" cy="62" r="2" fill="#ff9500"/>
+            </g>
+
+            <!-- Main Sweeping Second Hand -->
+            <g id="svg-hand-seconds-group" transform="rotate(0, 100, 100)">
+              <line x1="100" y1="116" x2="100" y2="10" stroke="#ff9500" stroke-width="1.5" stroke-linecap="round"/>
+              <circle cx="100" cy="110" r="3" fill="#ff9500"/>
+            </g>
+
+            <!-- Central Pivot Cap -->
+            <circle cx="100" cy="100" r="4" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- B. Controls -->
+      <div class="flex justify-between items-center px-4 max-w-sm mx-auto w-full pt-4">
+        <button id="sw-btn-lap" disabled class="ios-btn btn-gray-disabled">ラップ</button>
+        <button id="sw-btn-primary" class="ios-btn btn-green-start">開始</button>
+      </div>
+
+      <!-- C. Laps Table -->
+      <div class="max-w-sm mx-auto w-full h-44 overflow-y-auto mt-6 no-scrollbar border-t border-neutral-900">
+        <div id="sw-laps-table" class="divide-y divide-neutral-900 text-[16px]"></div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ================= TABS NAVIGATION (インラインSVG) ================= -->
+  <nav class="border-t border-neutral-950 bg-neutral-950/95 backdrop-blur-md flex justify-around items-center py-2.5 text-[10px] safe-pb">
+    <!-- 世界時計 -->
+    <button id="tab-world" class="flex flex-col items-center text-neutral-600 focus:outline-none transition-colors duration-200">
+      <svg class="w-[23px] h-[23px] mb-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" />
+        <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
+        <path d="M2 12h20" />
+      </svg>
+      <span>世界時計</span>
+    </button>
+    <!-- アラーム -->
+    <button id="tab-alarm" class="flex flex-col items-center text-neutral-600 focus:outline-none transition-colors duration-200">
+      <svg class="w-[23px] h-[23px] mb-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <circle cx="12" cy="13" r="8" />
+        <path d="M12 9v4l2 2" />
+        <path d="M5 3L2 6" />
+        <path d="M19 3l3 3" />
+      </svg>
+      <span>アラーム</span>
+    </button>
+    <!-- ストップウォッチ -->
+    <button id="tab-sw" class="flex flex-col items-center text-neutral-600 focus:outline-none transition-colors duration-200">
+      <svg class="w-[23px] h-[23px] mb-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <circle cx="12" cy="13" r="8" />
+        <path d="M12 9v4" />
+        <path d="M12 2v3" />
+        <path d="M10 2h4" />
+      </svg>
+      <span>ストップウォッチ</span>
+    </button>
+    <!-- タイマー -->
+    <button id="tab-timer" class="flex flex-col items-center text-orange-500 focus:outline-none transition-colors duration-200">
+      <svg class="w-[23px] h-[23px] mb-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" />
+        <path d="M12 6v6l4 2" />
+      </svg>
+      <span>タイマー</span>
+    </button>
+  </nav>
+
+  <!-- ================= ALARM LABEL SETTING SHEET (iOS Modal Style) ================= -->
+  <div id="modal-label" class="fixed inset-0 bg-black/80 z-50 flex flex-col justify-end transition-opacity duration-300 opacity-0 pointer-events-none" onclick="closeLabelMenu()">
+    <div class="bg-[#1c1c1e] rounded-t-2xl w-full flex flex-col transition-transform duration-300 translate-y-full p-4 pb-8" onclick="event.stopPropagation()">
+      <div class="flex justify-between items-center pb-4 border-b border-neutral-900">
+        <span class="text-white font-semibold text-lg">ラベル</span>
+        <button onclick="closeLabelMenu()" class="text-orange-500 font-semibold text-base">完了</button>
+      </div>
+      <div class="py-6">
+        <input type="text" id="input-timer-label" value="タイマー" class="w-full bg-[#2c2c2e] text-white p-3 rounded-lg focus:outline-none text-[16px] border border-neutral-800" placeholder="ラベル名を入力">
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= ALARM SOUND SELECTION SHEET ================= -->
+  <div id="modal-sound" class="fixed inset-0 bg-black/80 z-50 flex flex-col justify-end transition-opacity duration-300 opacity-0 pointer-events-none" onclick="closeSoundMenu(event)">
+    <div class="bg-[#1c1c1e] rounded-t-2xl w-full max-h-[75vh] flex flex-col transition-transform duration-300 translate-y-full" onclick="event.stopPropagation()">
+      <div class="flex justify-between items-center p-4 border-b border-neutral-900">
+        <span class="text-white font-semibold text-lg">終了時のサウンド</span>
+        <button onclick="closeSoundMenu(event)" class="text-orange-500 font-semibold text-base">設定</button>
+      </div>
+      <div class="flex-1 overflow-y-auto p-4 space-y-1" id="sound-options-list"></div>
+    </div>
+  </div>
+
+  <!-- ================= FULLSCREEN EMERGENCY ALARM OVERLAY ================= -->
+  <div id="overlay-alarm" class="fixed inset-0 bg-[#000000] z-50 flex flex-col justify-between items-center p-12 transition-all duration-500 opacity-0 pointer-events-none">
+    <div class="flex flex-col items-center mt-24">
+      <div class="w-24 h-24 bg-orange-500 rounded-3xl flex items-center justify-center shadow-2xl shadow-orange-500/20">
+        <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v2c-3 0-5 2.5-5 5v4.158c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+      </div>
+      <h2 id="overlay-timer-label" class="text-3xl font-light mt-10 tracking-wide text-white">タイマー</h2>
+      <p class="text-neutral-500 mt-2 text-base">時間になりました</p>
+    </div>
+    <button id="btn-stop-alarm" class="w-full max-w-sm py-4 bg-orange-500 active:scale-95 text-white font-semibold text-lg rounded-full transition-all duration-150 shadow-xl shadow-orange-500/30">
+      停止
+    </button>
+  </div>
+
+  <!-- ================= HIDDEN ELEMENTS FOR PICTURE IN PICTURE (PiP用隠し要素) ================= -->
+  <canvas id="pip-canvas" width="300" height="300" class="hidden" style="display: none;"></canvas>
+  <video id="pip-video" autoplay muted playsinline class="hidden" style="display: none;"></video>
+
+  <!-- ================= SOUNDS SYNTHESIZER AND OPERATIONAL AUDIO ================= -->
+  <script>
+    let audioCtx = null;
+    let alertLoopInterval = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    // 操作時の極小Tapticフィードバック音
+    function playHapticTick() {
+      try {
+        initAudio();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(320, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(60, audioCtx.currentTime + 0.015);
+
+        gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.015);
+
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.015);
+      } catch (e) {
+        console.warn("Audio block:", e);
+      }
+    }
+
+    const INSTRUMENT_SOUNDS = {
+      radar: {
+        name: "レーダー (デフォルト)",
+        play: () => {
+          const now = audioCtx.currentTime;
+          playPerfectChime(880.00, 0.08, now, 0.25); 
+          playPerfectChime(880.00, 0.08, now + 0.12, 0.25); 
+          playPerfectChime(1318.51, 0.18, now + 0.24, 0.35); 
+        }
+      },
+      chime: {
+        name: "美しいチャイム (和音)",
+        play: () => {
+          const now = audioCtx.currentTime;
+          const notes = [523.25, 659.25, 783.99, 1046.50];
+          notes.forEach((f, i) => {
+            playPerfectChime(f, 0.6, now + (i * 0.07), 0.2);
+          });
+        }
+      },
+      uplift: {
+        name: "アップリフト",
+        play: () => {
+          const now = audioCtx.currentTime;
+          const notes = [440.00, 554.37, 659.25, 880.00];
+          notes.forEach((f, i) => {
+            playPerfectChime(f, 0.4, now + (i * 0.05), 0.2);
+          });
+        }
+      },
+      classic: {
+        name: "デジタルアラーム",
+        play: () => {
+          const now = audioCtx.currentTime;
+          playPerfectChime(2000, 0.1, now, 0.25);
+          playPerfectChime(2000, 0.1, now + 0.15, 0.25);
+          playPerfectChime(2000, 0.1, now + 0.3, 0.25);
+        }
+      }
+    };
+
+    let selectedSoundKey = 'radar';
+
+    function playPerfectChime(freq, duration, startTime, vol) {
+      try {
+        initAudio();
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, startTime);
+
+        gainNode.gain.setValueAtTime(vol, startTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+
+        osc.start(startTime);
+        osc.stop(startTime + duration);
+      } catch (e) {
+        console.warn("Playback error:", e);
+      }
+    }
+
+    function startLoopingAlertSound() {
+      initAudio();
+      if (alertLoopInterval) clearInterval(alertLoopInterval);
+      INSTRUMENT_SOUNDS[selectedSoundKey].play();
+      alertLoopInterval = setInterval(() => {
+        INSTRUMENT_SOUNDS[selectedSoundKey].play();
+      }, 1600);
+    }
+
+    function stopLoopingAlertSound() {
+      if (alertLoopInterval) {
+        clearInterval(alertLoopInterval);
+        alertLoopInterval = null;
+      }
+    }
+  </script>
+
+  <!-- ================= CORE TIMER & STOPWATCH APPS LOGIC ================= -->
+  <script>
+    const tabWorld = document.getElementById('tab-world');
+    const tabAlarm = document.getElementById('tab-alarm');
+    const tabSW = document.getElementById('tab-sw');
+    const tabTimer = document.getElementById('tab-timer');
+    const appTitle = document.getElementById('app-title');
+
+    const viewWorld = document.getElementById('view-world');
+    const viewAlarm = document.getElementById('view-alarm');
+    const viewTimer = document.getElementById('view-timer');
+    const viewStopwatch = document.getElementById('view-stopwatch');
+
+    let activeTab = 'timer';
+
+    function switchTab(targetTab) {
+      initAudio();
+      playHapticTick();
+      activeTab = targetTab;
+      
+      // すべてのタブの表示スタイルをリセット
+      tabWorld.className = "flex flex-col items-center text-neutral-600 focus:outline-none transition-colors duration-200";
+      tabAlarm.className = "flex flex-col items-center text-neutral-600 focus:outline-none transition-colors duration-200";
+      tabSW.className = "flex flex-col items-center text-neutral-600 focus:outline-none transition-colors duration-200";
+      tabTimer.className = "flex flex-col items-center text-neutral-600 focus:outline-none transition-colors duration-200";
+
+      // すべて의 ビューを隠す
+      viewWorld.classList.add('hidden');
+      viewWorld.classList.remove('flex');
+      viewAlarm.classList.add('hidden');
+      viewAlarm.classList.remove('flex');
+      viewTimer.classList.add('hidden');
+      viewStopwatch.classList.add('hidden');
+      viewStopwatch.classList.remove('flex');
+
+      stopSwRenderLoop(); // ストップウォッチ非表示時はレンダリングを停止
+
+      if (targetTab === 'world') {
+        appTitle.textContent = "世界時計";
+        tabWorld.classList.add('text-orange-500');
+        tabWorld.classList.remove('text-neutral-600');
+        viewWorld.classList.remove('hidden');
+        viewWorld.classList.add('flex');
+        startWorldClockUpdate();
+      } else if (targetTab === 'alarm') {
+        appTitle.textContent = "アラーム";
+        tabAlarm.classList.add('text-orange-500');
+        tabAlarm.classList.remove('text-neutral-600');
+        viewAlarm.classList.remove('hidden');
+        viewAlarm.classList.add('flex');
+      } else if (targetTab === 'stopwatch') {
+        appTitle.textContent = "ストップウォッチ";
+        tabSW.classList.add('text-orange-500');
+        tabSW.classList.remove('text-neutral-600');
+        viewStopwatch.classList.remove('hidden');
+        viewStopwatch.classList.add('flex');
+        if (swState === 'running') {
+          startSwRenderLoop();
+        } else {
+          updateStopwatchTimer();
+        }
+      } else if (targetTab === 'timer') {
+        appTitle.textContent = "タイマー";
+        tabTimer.classList.add('text-orange-500');
+        tabTimer.classList.remove('text-neutral-600');
+        viewTimer.classList.remove('hidden');
+      }
+    }
+
+    tabWorld.addEventListener('click', () => switchTab('world'));
+    tabAlarm.addEventListener('click', () => switchTab('alarm'));
+    tabSW.addEventListener('click', () => switchTab('stopwatch'));
+    tabTimer.addEventListener('click', () => switchTab('timer'));
+
+    // iOSスタイルスイッチのトグル処理
+    function toggleIosSwitch(el) {
+      playHapticTick();
+      el.classList.toggle('active');
+      const timeText = el.previousElementSibling.querySelector('.tabular-timer');
+      const subText = el.previousElementSibling.querySelector('.text-neutral-400');
+      if (el.classList.contains('active')) {
+        timeText.classList.remove('text-neutral-500');
+        timeText.classList.add('text-neutral-200');
+      } else {
+        timeText.classList.remove('text-neutral-200');
+        timeText.classList.add('text-neutral-500');
+      }
+    }
+
+    // 世界時計のリアルタイム時刻同期ロジック
+    let worldClockInterval = null;
+    function startWorldClockUpdate() {
+      if (worldClockInterval) clearInterval(worldClockInterval);
+      function update() {
+        const now = new Date();
+        
+        // 各都市のタイムゾーン設定
+        const options = { hour: '2-digit', minute: '2-digit', hour12: true };
+        
+        const tokyoStr = now.toLocaleTimeString('en-US', { ...options, timeZone: 'Asia/Tokyo' });
+        const cupertinoStr = now.toLocaleTimeString('en-US', { ...options, timeZone: 'America/Los_Angeles' });
+        const londonStr = now.toLocaleTimeString('en-US', { ...options, timeZone: 'Europe/London' });
+        const newyorkStr = now.toLocaleTimeString('en-US', { ...options, timeZone: 'America/New_York' });
+
+        function setCityTime(city, timeStr) {
+          const parts = timeStr.split(' ');
+          const timeElem = document.getElementById(`world-time-${city}`);
+          const ampmElem = document.getElementById(`world-ampm-${city}`);
+          if (timeElem) timeElem.textContent = parts[0];
+          if (ampmElem) ampmElem.textContent = parts[1];
+        }
+
+        setCityTime('tokyo', tokyoStr);
+        setCityTime('cupertino', cupertinoStr);
+        setCityTime('london', londonStr);
+        setCityTime('newyork', newyorkStr);
+      }
+      update();
+      worldClockInterval = setInterval(update, 1000);
+    }
+
+    // ================= TIMER CONTROLLER =================
+    let timerState = 'idle'; 
+    let totalSecs = 0;
+    let secsLeft = 0;
+    let timerIntervalId = null;
+    let timerExpectedFinishTime = 0; 
+
+    let selHours = 0;
+    let selMinutes = 5; 
+    let selSeconds = 0;
+    let recentTimersList = [];
+    let scrollDebounceTimer = null;
+
+    const tPanelSetup = document.getElementById('timer-setup-panel');
+    const tPanelRunning = document.getElementById('timer-running-panel');
+    const tBtnCancel = document.getElementById('timer-btn-cancel');
+    const tBtnPrimary = document.getElementById('timer-btn-primary');
+    const tCountdown = document.getElementById('timer-countdown');
+    const tEta = document.getElementById('timer-finish-eta');
+    const tRing = document.getElementById('timer-ring');
+    const tRunningTitle = document.getElementById('timer-running-title');
+    const tLabelInput = document.getElementById('input-timer-label');
+    const tLabelDisplay = document.getElementById('label-display');
+    const tHistoryList = document.getElementById('timer-history-list');
+
+    function buildPickers() {
+      populateScroller('scroller-hours', 24);
+      populateScroller('scroller-minutes', 60);
+      populateScroller('scroller-seconds', 60);
+
+      setTimeout(() => {
+        setPickerIndex('col-hours', 0);
+        setPickerIndex('col-minutes', 5);
+        setPickerIndex('col-seconds', 0);
+        recalcTimerParams();
+      }, 50);
+    }
+
+    function populateScroller(scrollerId, limit) {
+      const container = document.getElementById(scrollerId);
+      container.innerHTML = '';
+      for (let i = 0; i < limit; i++) {
+        const item = document.createElement('div');
+        item.className = 'picker-val-item';
+        item.textContent = String(i).padStart(2, '0');
+        container.appendChild(item);
+      }
+    }
+
+    function setPickerIndex(colId, index) {
+      const col = document.getElementById(colId);
+      col.scrollTop = index * 40;
+      updatePickerVisuals(col, index);
+    }
+
+    function onPickerScroll(col, type) {
+      if (scrollDebounceTimer) clearTimeout(scrollDebounceTimer);
+      
+      const limit = col.firstElementChild.children.length;
+      const index = Math.max(0, Math.min(limit - 1, Math.round(col.scrollTop / 40)));
+      
+      updatePickerVisuals(col, index);
+
+      if (type === 'hours') selHours = index;
+      if (type === 'minutes') selMinutes = index;
+      if (type === 'seconds') selSeconds = index;
+
+      scrollDebounceTimer = setTimeout(() => {
+        recalcTimerParams();
+      }, 100);
+    }
+
+    function updatePickerVisuals(col, targetIdx) {
+      const items = col.querySelectorAll('.picker-val-item');
+      items.forEach((item, idx) => {
+        if (idx === targetIdx) {
+          item.classList.add('active');
+        } else {
+          item.classList.remove('active');
+        }
+      });
+    }
+
+    function recalcTimerParams() {
+      totalSecs = (selHours * 3600) + (selMinutes * 60) + selSeconds;
+      if (totalSecs <= 0) {
+        tBtnPrimary.classList.add('opacity-40');
+        tBtnPrimary.disabled = true;
+      } else {
+        tBtnPrimary.classList.remove('opacity-40');
+        tBtnPrimary.disabled = false;
+      }
+    }
+
+    function triggerTimerStart() {
+      initAudio();
+      playHapticTick();
+      if (totalSecs <= 0) return;
+
+      const currentLabelValue = tLabelInput.value || "タイマー";
+
+      if (timerState === 'idle') {
+        secsLeft = totalSecs;
+        registerHistoryEntry(totalSecs, currentLabelValue);
+      }
+
+      timerState = 'running';
+      
+      tPanelSetup.classList.add('hidden');
+      tPanelRunning.classList.remove('hidden');
+
+      tBtnCancel.disabled = false;
+      tBtnCancel.className = "ios-btn btn-gray-active";
+
+      tBtnPrimary.textContent = "一時停止";
+      tBtnPrimary.className = "ios-btn btn-orange-pause";
+
+      tRunningTitle.textContent = currentLabelValue;
+      
+      timerExpectedFinishTime = Date.now() + secsLeft * 1000;
+      
+      refreshEtaText();
+      refreshProgressUI();
+      drawPipCanvas(); // 最初の一枚をレンダリング
+
+      if (timerIntervalId) clearInterval(timerIntervalId);
+      timerIntervalId = setInterval(() => {
+        const remaining = Math.ceil((timerExpectedFinishTime - Date.now()) / 1000);
+        secsLeft = Math.max(0, remaining);
+        
+        refreshProgressUI();
+        drawPipCanvas(); // 1秒ごとにPiP用のCanvasを描画更新
+        
+        if (secsLeft <= 0) {
+          executeAlarmAlert();
+        }
+      }, 200); 
+    }
+
+    function triggerTimerPause() {
+      playHapticTick();
+      timerState = 'paused';
+      clearInterval(timerIntervalId);
+      tBtnPrimary.textContent = "再開";
+      tBtnPrimary.className = "ios-btn btn-green-start";
+    }
+
+    function triggerTimerReset() {
+      playHapticTick();
+      timerState = 'idle';
+      clearInterval(timerIntervalId);
+      secsLeft = 0;
+
+      // PiPを終了する
+      if (document.pictureInPictureElement) {
+        document.exitPictureInPicture().catch(console.warn);
+      }
+
+      tPanelSetup.classList.remove('hidden');
+      tPanelRunning.classList.add('hidden');
+
+      tBtnCancel.disabled = true;
+      tBtnCancel.className = "ios-btn btn-gray-disabled";
+
+      tBtnPrimary.textContent = "開始";
+      tBtnPrimary.className = "ios-btn btn-green-start";
+
+      tRing.style.strokeDashoffset = 0;
+      recalcTimerParams();
+    }
+
+    function refreshProgressUI() {
+      const h = Math.floor(secsLeft / 3600);
+      const m = Math.floor((secsLeft % 3600) / 60);
+      const s = secsLeft % 60;
+
+      let displayStr = "";
+      if (h > 0) {
+        displayStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+      } else {
+        displayStr = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+      }
+      tCountdown.textContent = displayStr;
+
+      const strokeDash = 640.88;
+      const progress = secsLeft / totalSecs;
+      tRing.style.strokeDashoffset = strokeDash * (1 - progress);
+    }
+
+    function refreshEtaText() {
+      const now = new Date();
+      const eta = new Date(now.getTime() + (secsLeft * 1000));
+      const hoursStr = String(eta.getHours()).padStart(2, '0');
+      const minsStr = String(eta.getMinutes()).padStart(2, '0');
+      tEta.textContent = `${hoursStr}:${minsStr}`;
+    }
+
+    function executeAlarmAlert() {
+      clearInterval(timerIntervalId);
+      timerState = 'idle';
+
+      // タイマー終了時にPiPを閉じる
+      if (document.pictureInPictureElement) {
+        document.exitPictureInPicture().catch(console.warn);
+      }
+
+      const alertOverlay = document.getElementById('overlay-alarm');
+      document.getElementById('overlay-timer-label').textContent = tLabelInput.value || "タイマー";
+      alertOverlay.classList.remove('pointer-events-none', 'opacity-0');
+      startLoopingAlertSound();
+    }
+
+    document.getElementById('btn-stop-alarm').addEventListener('click', () => {
+      playHapticTick();
+      stopLoopingAlertSound();
+      document.getElementById('overlay-alarm').classList.add('pointer-events-none', 'opacity-0');
+      triggerTimerReset();
+    });
+
+    tBtnPrimary.addEventListener('click', () => {
+      if (timerState === 'running') {
+        triggerTimerPause();
+      } else {
+        triggerTimerStart();
+      }
+    });
+
+    tBtnCancel.addEventListener('click', triggerTimerReset);
+
+    function registerHistoryEntry(seconds, label) {
+      recentTimersList = recentTimersList.filter(item => item.seconds !== seconds);
+      recentTimersList.unshift({ seconds, label: label || "タイマー" });
+      if (recentTimersList.length > 5) recentTimersList.pop();
+
+      localStorage.setItem('ios_timer_recent_history', JSON.stringify(recentTimersList));
+      drawHistoryPills();
+    }
+
+    function retrieveHistory() {
+      const raw = localStorage.getItem('ios_timer_recent_history');
+      if (raw) {
+        try {
+          recentTimersList = JSON.parse(raw);
+        } catch (e) {
+          recentTimersList = [];
+        }
+      } else {
+        recentTimersList = []; 
+      }
+      drawHistoryPills();
+    }
+
+    function drawHistoryPills() {
+      tHistoryList.innerHTML = '';
+      if (recentTimersList.length === 0) {
+        tHistoryList.innerHTML = `<div class="text-neutral-600 text-sm py-1 font-normal tracking-wide">履歴はありません</div>`;
+        return;
+      }
+      recentTimersList.forEach(item => {
+        const h = Math.floor(item.seconds / 3600);
+        const m = Math.floor((item.seconds % 3600) / 60);
+        const s = item.seconds % 60;
+
+        let timeStr = "";
+        if (h > 0) timeStr += `${h}時間`;
+        if (m > 0) timeStr += `${m}分`;
+        if (s > 0 || (h === 0 && m === 0)) timeStr += `${s}秒`;
+
+        const chip = document.createElement('button');
+        chip.className = 'flex-shrink-0 bg-[#1c1c1e] hover:bg-[#2c2c2e] active:scale-95 px-4 py-2 rounded-full text-xs text-neutral-200 transition-all duration-150 flex items-center gap-1.5 border border-neutral-900';
+        chip.innerHTML = `<span class="font-semibold text-white">${timeStr}</span><span class="text-neutral-400 font-normal">(${item.label})</span>`;
+        
+        chip.addEventListener('click', () => {
+          initAudio();
+          playHapticTick();
+          if (timerState !== 'idle') triggerTimerReset();
+          
+          setPickerIndex('col-hours', h);
+          setPickerIndex('col-minutes', m);
+          setPickerIndex('col-seconds', s);
+          tLabelInput.value = item.label;
+          tLabelDisplay.textContent = item.label;
+          selHours = h;
+          selMinutes = m;
+          selSeconds = s;
+          recalcTimerParams();
+
+          setTimeout(triggerTimerStart, 150);
+        });
+        tHistoryList.appendChild(chip);
+      });
+    }
+
+    // ================= PICTURE-IN-PICTURE (PiP) CONTROLLER =================
+    const pipCanvas = document.getElementById('pip-canvas');
+    const pipCtx = pipCanvas.getContext('2d');
+    const pipVideo = document.getElementById('pip-video');
+    const btnPip = document.getElementById('btn-pip');
+    let pipStream = null;
+
+    // PiP用の映像をCanvasにリアルタイム描画
+    function drawPipCanvas() {
+      if (!pipCtx) return;
+
+      // 1. 背景クリア
+      pipCtx.fillStyle = '#000000';
+      pipCtx.fillRect(0, 0, 300, 300);
+
+      // 2. 円形進行状況メーター
+      const cx = 150;
+      const cy = 150;
+      const radius = 120;
+
+      // 進行状況の背景円
+      pipCtx.beginPath();
+      pipCtx.arc(cx, cy, radius, 0, 2 * Math.PI);
+      pipCtx.strokeStyle = '#1c1c1e';
+      pipCtx.lineWidth = 10;
+      pipCtx.stroke();
+
+      // 残り時間に応じたオレンジの円弧
+      if (totalSecs > 0) {
+        const progress = secsLeft / totalSecs;
+        const startAngle = -0.5 * Math.PI;
+        const endAngle = startAngle + (2 * Math.PI * progress);
+        
+        pipCtx.beginPath();
+        pipCtx.arc(cx, cy, radius, startAngle, endAngle);
+        pipCtx.strokeStyle = '#ff9500';
+        pipCtx.lineWidth = 12;
+        pipCtx.lineCap = 'round';
+        pipCtx.stroke();
+      }
+
+      // 3. 残り時間を描画 (等幅フォントを再現)
+      const h = Math.floor(secsLeft / 3600);
+      const m = Math.floor((secsLeft % 3600) / 60);
+      const s = secsLeft % 60;
+
+      let displayStr = "";
+      if (h > 0) {
+        displayStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+      } else {
+        displayStr = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+      }
+
+      pipCtx.fillStyle = '#ffffff';
+      pipCtx.textAlign = 'center';
+      pipCtx.textBaseline = 'middle';
+      
+      // 文字サイズのダイナミック調整
+      if (h > 0) {
+        pipCtx.font = 'bold 44px sans-serif';
+      } else {
+        pipCtx.font = 'bold 54px sans-serif';
+      }
+      pipCtx.fillText(displayStr, cx, cy - 15);
+
+      // 4. ラベルを描画
+      pipCtx.fillStyle = '#ff9500';
+      pipCtx.font = '22px sans-serif';
+      pipCtx.fillText(tLabelInput.value || "タイマー", cx, cy + 45);
+    }
+
+    // PiPミニ窓の起動処理
+    async function triggerPictureInPicture() {
+      initAudio();
+      playHapticTick();
+
+      if (!('documentPictureInPicture' in window) && !pipVideo.requestPictureInPicture) {
+        alert("お使いのWebブラウザはPicture-in-Picture機能に対応していません。SafariやChromeの最新版をご利用ください。");
+        return;
+      }
+
+      try {
+        // Canvasのビデオストリームをキャプチャ (20fps)
+        if (!pipStream) {
+          pipStream = pipCanvas.captureStream(20);
+          pipVideo.srcObject = pipStream;
+        }
+
+        // ビデオ再生＆PiPリクエスト
+        await pipVideo.play();
+        await pipVideo.requestPictureInPicture();
+      } catch (err) {
+        console.error("Picture-in-Pictureの起動に失敗しました:", err);
+      }
+    }
+
+    btnPip.addEventListener('click', triggerPictureInPicture);
+
+    // アプリがバックグラウンドに回った時(閉じられた時)に自動で小窓(PiP)化する仕組み
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden' && timerState === 'running') {
+        // iOS/Safariのセキュリティポリシー上、ユーザーインタラクションのない自動PiPは弾かれる可能性があるため、
+        // ユーザーが「開始」または「PiP」ボタンを1度タップしてパーミッションを得ておくことで動作を確実化します。
+        triggerPictureInPicture().catch(() => {});
+      }
+    });
+
+    // ================= STOPWATCH CONTROLLER =================
+    let swState = 'idle'; 
+    let swStartTime = 0;
+    let swElapsedTime = 0;
+    let swRenderFrameId = null; 
+    let swLaps = [];
+    let swDisplayMode = 'digital'; 
+
+    const swMainDisp = document.getElementById('sw-time-main');
+    const swMsDisp = document.getElementById('sw-time-ms');
+    const swBtnLap = document.getElementById('sw-btn-lap');
+    const swBtnPrimary = document.getElementById('sw-btn-primary');
+    const swLapsTable = document.getElementById('sw-laps-table');
+
+    function toggleStopwatchDisplayMode() {
+      playHapticTick();
+      if (swDisplayMode === 'digital') {
+        swDisplayMode = 'analog';
+        document.getElementById('sw-digital-face').classList.add('hidden');
+        document.getElementById('sw-analog-face').classList.remove('hidden');
+      } else {
+        swDisplayMode = 'digital';
+        document.getElementById('sw-analog-face').classList.add('hidden');
+        document.getElementById('sw-digital-face').classList.remove('hidden');
+      }
+      updateStopwatchTimer(); 
+    }
+
+    function updateStopwatchTimer() {
+      let delta = swElapsedTime;
+      if (swState === 'running') {
+        delta += Date.now() - swStartTime;
+      }
+
+      const mins = Math.floor(delta / 60000);
+      const secs = Math.floor((delta % 60000) / 1000);
+      const ms = Math.floor((delta % 1000) / 10);
+
+      const minsStr = String(mins).padStart(2, '0');
+      const secsStr = String(secs).padStart(2, '0');
+      const msStr = String(ms).padStart(2, '0');
+
+      if (swDisplayMode === 'digital') {
+        swMainDisp.textContent = `${minsStr}:${secsStr}.`;
+        swMsDisp.textContent = msStr;
+      }
+
+      if (swDisplayMode === 'analog') {
+        const secsAngle = ((delta % 60000) / 1000) * 6; 
+        const minsAngle = ((delta % 1800000) / 60000) * 12; 
+
+        const secondsHandGroup = document.getElementById('svg-hand-seconds-group');
+        const minutesHand = document.getElementById('svg-hand-sub-minutes');
+        
+        if (secondsHandGroup) secondsHandGroup.setAttribute('transform', `rotate(${secsAngle}, 100, 100)`);
+        if (minutesHand) minutesHand.setAttribute('transform', `rotate(${minsAngle}, 100, 62)`);
+      }
+    }
+
+    function startSwRenderLoop() {
+      if (swRenderFrameId) cancelAnimationFrame(swRenderFrameId);
+      function render() {
+        updateStopwatchTimer();
+        if (swState === 'running') {
+          swRenderFrameId = requestAnimationFrame(render);
+        }
+      }
+      swRenderFrameId = requestAnimationFrame(render);
+    }
+
+    function stopSwRenderLoop() {
+      if (swRenderFrameId) {
+        cancelAnimationFrame(swRenderFrameId);
+        swRenderFrameId = null;
+      }
+    }
+
+    function swStart() {
+      initAudio();
+      playHapticTick();
+      swState = 'running';
+      swStartTime = Date.now();
+      
+      swBtnPrimary.textContent = "停止";
+      swBtnPrimary.className = "ios-btn btn-red-stop";
+
+      swBtnLap.textContent = "ラップ";
+      swBtnLap.disabled = false;
+      swBtnLap.className = "ios-btn btn-gray-active";
+
+      startSwRenderLoop(); 
+    }
+
+    function swStop() {
+      playHapticTick();
+      swState = 'paused';
+      stopSwRenderLoop();
+      swElapsedTime += Date.now() - swStartTime;
+
+      swBtnPrimary.textContent = "開始";
+      swBtnPrimary.className = "ios-btn btn-green-start";
+
+      swBtnLap.textContent = "リセット";
+      updateStopwatchTimer(); 
+    }
+
+    function swReset() {
+      playHapticTick();
+      swState = 'idle';
+      stopSwRenderLoop();
+      swStartTime = 0;
+      swElapsedTime = 0;
+      swLaps = [];
+
+      swMainDisp.textContent = "00:00.";
+      swMsDisp.textContent = "00";
+
+      const secondsHandGroup = document.getElementById('svg-hand-seconds-group');
+      const minutesHand = document.getElementById('svg-hand-sub-minutes');
+      if (secondsHandGroup) secondsHandGroup.setAttribute('transform', 'rotate(0, 100, 100)');
+      if (minutesHand) minutesHand.setAttribute('transform', 'rotate(0, 100, 62)');
+
+      swBtnPrimary.textContent = "開始";
+      swBtnPrimary.className = "ios-btn btn-green-start";
+
+      swBtnLap.textContent = "ラップ";
+      swBtnLap.disabled = true;
+      swBtnLap.className = "ios-btn btn-gray-disabled";
+
+      swLapsTable.innerHTML = '';
+    }
+
+    function swLap() {
+      playHapticTick();
+      const now = Date.now();
+      const currentTotal = now - swStartTime + swElapsedTime;
+      
+      let lapDelta = currentTotal;
+      if (swLaps.length > 0) {
+        const prevTotal = swLaps[0].totalTime;
+        lapDelta = currentTotal - prevTotal;
+      }
+
+      const lapNumber = swLaps.length + 1;
+      swLaps.unshift({
+        num: lapNumber,
+        lapTime: lapDelta,
+        totalTime: currentTotal
+      });
+
+      renderLaps();
+    }
+
+    function renderLaps() {
+      swLapsTable.innerHTML = '';
+      if (swLaps.length === 0) return;
+
+      let minIdx = -1;
+      let maxIdx = -1;
+      let minVal = Infinity;
+      let maxVal = -Infinity;
+
+      if (swLaps.length > 1) {
+        swLaps.forEach((lap, idx) => {
+          if (lap.lapTime < minVal) {
+            minVal = lap.lapTime;
+            minIdx = idx;
+          }
+          if (lap.lapTime > maxVal) {
+            maxVal = lap.lapTime;
+            maxIdx = idx;
+          }
+        });
+      }
+
+      swLaps.forEach((lap, idx) => {
+        const formatted = formatMsToTimeStr(lap.lapTime);
+        const row = document.createElement('div');
+        row.className = 'flex justify-between items-center py-3.5 px-4 font-normal text-white border-b border-neutral-950';
+
+        let textColorClass = 'text-white';
+        if (idx === minIdx) textColorClass = 'text-[#30d158]'; 
+        if (idx === maxIdx) textColorClass = 'text-[#ff3b30]'; 
+
+        row.innerHTML = `
+          <span class="${textColorClass}">ラップ ${lap.num}</span>
+          <span class="tabular-timer font-medium ${textColorClass}">${formatted}</span>
+        `;
+        swLapsTable.appendChild(row);
+      });
+    }
+
+    function formatMsToTimeStr(duration) {
+      const mins = Math.floor(duration / 60000);
+      const secs = Math.floor((duration % 60000) / 1000);
+      const ms = Math.floor((duration % 1000) / 10);
+      return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}.${String(ms).padStart(2, '0')}`;
+    }
+
+    swBtnPrimary.addEventListener('click', () => {
+      if (swState === 'running') {
+        swStop();
+      } else {
+        swStart();
+      }
+    });
+
+    swBtnLap.addEventListener('click', () => {
+      if (swState === 'running') {
+        swLap();
+      } else {
+        if (swState === 'paused') {
+          swReset();
+        }
+      }
+    });
+
+    // ================= LABEL OPTIONS SHEET =================
+    function openLabelMenu(event) {
+      if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+      }
+      playHapticTick();
+      const modal = document.getElementById('modal-label');
+      const inner = modal.querySelector('div');
+      modal.classList.remove('pointer-events-none', 'opacity-0');
+      inner.classList.remove('translate-y-full');
+      
+      setTimeout(() => {
+        tLabelInput.focus();
+        tLabelInput.select();
+      }, 200);
+    }
+
+    function closeLabelMenu() {
+      playHapticTick();
+      const modal = document.getElementById('modal-label');
+      const inner = modal.querySelector('div');
+      modal.classList.add('opacity-0', 'pointer-events-none');
+      inner.classList.add('translate-y-full');
+
+      const updatedVal = tLabelInput.value.trim() || "タイマー";
+      tLabelInput.value = updatedVal;
+      tLabelDisplay.textContent = updatedVal;
+
+      tLabelInput.blur(); 
+    }
+
+    document.getElementById('input-timer-label').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        closeLabelMenu();
+      }
+    });
+
+    // ================= SOUND OPTIONS SHEET =================
+    function openSoundMenu(event) {
+      if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+      }
+      playHapticTick();
+      const modal = document.getElementById('modal-sound');
+      const inner = modal.querySelector('div');
+      modal.classList.remove('pointer-events-none', 'opacity-0');
+      inner.classList.remove('translate-y-full');
+      renderSoundSelections();
+    }
+
+    function closeSoundMenu(event) {
+      if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+      }
+      playHapticTick();
+      const modal = document.getElementById('modal-sound');
+      const inner = modal.querySelector('div');
+      modal.classList.add('opacity-0', 'pointer-events-none');
+      inner.classList.add('translate-y-full');
+    }
+
+    function renderSoundSelections() {
+      const container = document.getElementById('sound-options-list');
+      container.innerHTML = '';
+
+      Object.keys(INSTRUMENT_SOUNDS).forEach(key => {
+        const isCurrent = key === selectedSoundKey;
+        const opt = document.createElement('div');
+        opt.className = `flex justify-between items-center p-3.5 rounded-xl cursor-pointer ${isCurrent ? 'bg-orange-950/20 text-orange-500' : 'text-neutral-200 hover:bg-neutral-800'}`;
+        opt.innerHTML = `
+          <span class="text-base font-normal">${INSTRUMENT_SOUNDS[key].name}</span>
+          ${isCurrent ? '<svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>' : ''}
+        `;
+        opt.onclick = (e) => {
+          e.stopPropagation();
+          playHapticTick();
+          selectedSoundKey = key;
+          document.getElementById('label-selected-sound').textContent = INSTRUMENT_SOUNDS[key].name;
+          INSTRUMENT_SOUNDS[key].play(); 
+          renderSoundSelections();
+        };
+        container.appendChild(opt);
+      });
+    }
+
+    // ================= SYSTEM INITIALIZATION =================
+    window.onload = function() {
+      buildPickers();
+      retrieveHistory();
+      swReset(); 
+      startWorldClockUpdate(); // 世界時計の時刻同期を開始
+      
+      document.body.addEventListener('click', () => {
+        initAudio();
+      }, { once: true });
+    };
+  </script>
+
+  <!-- PWA Install Handling -->
+  <script>
+    let deferredInstallPrompt;
+    const pwaButton = document.getElementById('pwa-install-btn');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+      pwaButton.classList.remove('hidden');
+    });
+
+    pwaButton.addEventListener('click', async () => {
+      playHapticTick();
+      if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        const { outcome } = await deferredInstallPrompt.userChoice;
+        deferredInstallPrompt = null;
+        pwaButton.classList.add('hidden');
+      } else {
+        alert("Safariブラウザ下部の「共有ボタン（↑）」から「ホーム画面に追加」を実行してインストールしてください。");
+      }
+    });
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then(reg => console.log('PWA Service Worker registered:', reg.scope))
+          .catch(err => console.log('PWA Service Worker registration error:', err));
+      });
+    }
+  </script>
+</body>
+</html>
