@@ -50,7 +50,7 @@
       font-family: "Inter", "SF Pro Display", -apple-system, sans-serif;
       font-variant-numeric: tabular-nums;
       font-feature-settings: "tnum" on;
-      font-weight: 200; /* 視認性向上のため100から極上の細さである200へ最適化 */
+      font-weight: 200; /* 視認性向上のため極上の細さである200へ最適化 */
       letter-spacing: -0.05em; /* 文字間隔を本物同様にタイトに調整 */
     }
 
@@ -222,7 +222,7 @@
       background: radial-gradient(circle at center, #1c1c1e 0%, #000000 100%);
     }
 
-    /* モバイル・PWA時に画面の全方向に100%吸着させる完全固定設定 */
+    /* PWA用スマートレスポンシブコンテナ */
     @media (max-width: 639px) {
       .phone-container {
         position: fixed !important;
@@ -253,8 +253,8 @@
     <div class="absolute top-0 left-1/2 -translate-x-1/2 w-36 h-6 bg-[#1c1c1e] rounded-b-2xl z-[99] hidden sm:block"></div>
 
     <!-- ================= FIXED MAIN VIEWPORT (コンテンツ表示領域) ================= -->
-    <!-- タブバーの正確な高さ(60px + env-bottom)の上に配置し、要素の競合を完全にゼロにします -->
-    <div class="absolute inset-x-0 top-0 flex flex-col justify-between safe-pt overflow-hidden" style="bottom: calc(60px + env(safe-area-inset-bottom, 12px));">
+    <!-- タブバーの正確な高さ(49px + env-bottom)の上に配置し、要素の競合を完全にゼロにします -->
+    <div class="absolute inset-x-0 top-0 flex flex-col justify-between safe-pt overflow-hidden" style="bottom: calc(49px + env(safe-area-inset-bottom, 0px));">
       
       <!-- ================= TOP HEADER ================= -->
       <header class="flex justify-between items-center px-6 pt-3 pb-1 flex-shrink-0">
@@ -346,7 +346,7 @@
               <div class="flex justify-center items-center h-full w-full relative z-20">
                 <!-- Hours Wheel -->
                 <div class="flex items-center relative h-[180px]">
-                  <div id="col-hours" class="picker-column" onscroll="onPickerScroll(this, 'hours')">
+                  <div id="col-hours" class="picker-column">
                     <div class="picker-scroller" id="scroller-hours"></div>
                   </div>
                   <span class="text-white text-[15px] font-semibold select-none pointer-events-none z-30 ml-1.5">時間</span>
@@ -354,7 +354,7 @@
 
                 <!-- Minutes Wheel -->
                 <div class="flex items-center relative h-[180px] ml-5">
-                  <div id="col-minutes" class="picker-column" onscroll="onPickerScroll(this, 'minutes')">
+                  <div id="col-minutes" class="picker-column">
                     <div class="picker-scroller" id="scroller-minutes"></div>
                   </div>
                   <span class="text-white text-[15px] font-semibold select-none pointer-events-none z-30 ml-1.5">分</span>
@@ -362,7 +362,7 @@
 
                 <!-- Seconds Wheel -->
                 <div class="flex items-center relative h-[180px] ml-5">
-                  <div id="col-seconds" class="picker-column" onscroll="onPickerScroll(this, 'seconds')">
+                  <div id="col-seconds" class="picker-column">
                     <div class="picker-scroller" id="scroller-seconds"></div>
                   </div>
                   <span class="text-white text-[15px] font-semibold select-none pointer-events-none z-30 ml-1.5">秒</span>
@@ -406,7 +406,7 @@
                 <!-- タイマー稼働中用のラベル名 -->
                 <span id="timer-running-title" class="text-[#8e8e93] text-sm font-normal tracking-wide mb-1 select-none">タイマー</span>
                 <!-- 究極に細く研ぎ澄まされた極上のInterフォント表示 (文字サイズを大きく調整) -->
-                <span id="timer-countdown" class="text-6xl font-extralight tracking-tight tabular-timer text-white select-none leading-none">4:59</span>
+                <span id="timer-countdown" class="text-[5.5rem] font-thin tracking-tight tabular-timer text-white select-none leading-none">4:59</span>
                 <div class="flex items-center gap-1 text-[15px] text-[#8e8e93] mt-4 font-normal">
                   <svg class="w-3.5 h-3.5 fill-current text-[#8e8e93]" viewBox="0 0 24 24">
                     <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
@@ -451,7 +451,7 @@
             <div class="text-[11px] text-neutral-500 font-bold tracking-wider uppercase mb-2 px-1">最近の項目</div>
             <div id="timer-history-list" class="flex gap-2 overflow-x-auto pb-1 no-scrollbar"></div>
           </div>
-        </div> <!-- HTML構造バグが修正された美しい入れ子 -->
+        </div> <!-- [バグ修正] HTML構造バグが修正された美しい入れ子 -->
 
         <!-- 4. STOPWATCH VIEW -->
         <div id="view-stopwatch" class="hidden flex-col flex-1 justify-between py-4 transition-all duration-300">
@@ -999,7 +999,6 @@
     let isSettingProgrammatically = false;
 
     function buildPickers() {
-      isSettingProgrammatically = true;
       populateScroller('scroller-hours', 24, true); 
       populateScroller('scroller-minutes', 60, false);
       populateScroller('scroller-seconds', 60, false);
@@ -1009,8 +1008,7 @@
         setPickerIndex('col-minutes', 5);
         setPickerIndex('col-seconds', 0);
         recalcTimerParams();
-        isSettingProgrammatically = false; // 初期化セットアップ完了後にイベントを解禁
-      }, 150);
+      }, 100);
     }
 
     function populateScroller(scrollerId, limit, isHours = false) {
@@ -1025,15 +1023,23 @@
       }
     }
 
+    // ★修正：スクロール位置変更時のフラグ排他処理を再実装（scrollイベントの衝突バグを完璧に防止します）
     function setPickerIndex(colId, index) {
       const col = document.getElementById(colId);
       if (!col) return;
+      
+      isSettingProgrammatically = true; // プログラム制御中フラグをON
       col.scrollTop = index * 40;
       updatePickerVisuals(col, index, colId === 'col-hours' ? '時間' : colId === 'col-minutes' ? '分' : '秒');
+      
+      // レンダリングが落ち着いた後にフラグを解放
+      setTimeout(() => {
+        isSettingProgrammatically = false;
+      }, 150);
     }
 
     function onPickerScroll(col, type) {
-      if (isSettingProgrammatically) return; // 初期化時の意図しないイベント衝突を完全無視
+      if (isSettingProgrammatically) return; // プログラムからの変更中の手動スクロールイベントを安全に無視
 
       if (scrollDebounceTimer) clearTimeout(scrollDebounceTimer);
       
@@ -1705,6 +1711,7 @@
       updateStopwatchTimer(); 
     }
 
+    // swReset の復旧
     function swReset() {
       try {
         playHapticTick();
