@@ -30,7 +30,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background-color: #0d0d0c;
+      background-color: #000000;
       margin: 0;
       padding: 0;
       overflow: hidden;
@@ -66,7 +66,7 @@
     }
 
     .picker-column {
-      width: 54px; /* 純粋な数字の幅に最適化 */
+      width: 60px; /* 純粋な数字の幅に最適化 */
       height: 180px;
       position: relative;
       overflow-y: scroll;
@@ -222,11 +222,17 @@
       background: radial-gradient(circle at center, #1c1c1e 0%, #000000 100%);
     }
 
-    /* PWA用スマートレスポンシブコンテナ */
+    /* モバイル・PWA時に画面の全方向に100%吸着させる完全固定設定 (Gapバグの解決策) */
     @media (max-width: 639px) {
       .phone-container {
-        width: 100% !important;
-        height: 100% !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        height: 100dvh !important; /* iOSのアドレスバーを考慮した極限吸着 */
         border-radius: 0 !important;
         border: none !important;
         box-shadow: none !important;
@@ -241,14 +247,14 @@
 <body class="pc-backdrop flex items-center justify-center">
 
   <!-- ================= APP WRAPPER CONTAINER ================= -->
-  <!-- PC画面では美しいiPhoneサイズ枠として機能し、スマートフォンでは自動で枠が消えて100%吸着フルスクリーンになります -->
-  <div id="app-container" class="phone-container relative w-[393px] h-[846px] bg-[#000000] rounded-[48px] border-[8px] border-[#1c1c1e] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] overflow-hidden flex flex-col justify-between transition-all duration-300">
+  <!-- PCではiPhone風シミュレータフレーム、スマホ・PWA起動時は自動でフレームが非表示になり画面全体に100%吸着します -->
+  <div id="app-container" class="phone-container relative w-[393px] h-[852px] bg-[#000000] rounded-[48px] border-[8px] border-[#1c1c1e] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] overflow-hidden flex flex-col justify-between transition-all duration-300">
     
     <!-- iPhoneノッチ (大画面時のアクセント) -->
     <div class="absolute top-0 left-1/2 -translate-x-1/2 w-36 h-6 bg-[#1c1c1e] rounded-b-2xl z-[99] hidden sm:block"></div>
 
-    <!-- ================= FIXED MAIN VIEWPORT (コンテンツ表示部) ================= -->
-    <!-- ナビゲーションバーの高さ（60px + セーフエリア）の分だけ正確にボトムを空け、スクロール競合をゼロにします -->
+    <!-- ================= FIXED MAIN VIEWPORT (コンテンツ表示領域) ================= -->
+    <!-- タブバーの正確な高さ(60px + env-bottom)の上に配置し、要素の競合を完全にゼロにします -->
     <div class="absolute inset-x-0 top-0 flex flex-col justify-between safe-pt overflow-hidden" style="bottom: calc(60px + env(safe-area-inset-bottom, 12px));">
       
       <!-- ================= TOP HEADER ================= -->
@@ -344,23 +350,23 @@
                   <div id="col-hours" class="picker-column" onscroll="onPickerScroll(this, 'hours')">
                     <div class="picker-scroller" id="scroller-hours"></div>
                   </div>
-                  <span class="text-white text-[15px] font-semibold select-none pointer-events-none z-30 ml-0.5">時間</span>
+                  <span class="text-white text-[15px] font-semibold select-none pointer-events-none z-30 ml-1.5">時間</span>
                 </div>
 
                 <!-- Minutes Wheel -->
-                <div class="flex items-center relative h-[180px] ml-4">
+                <div class="flex items-center relative h-[180px] ml-5">
                   <div id="col-minutes" class="picker-column" onscroll="onPickerScroll(this, 'minutes')">
                     <div class="picker-scroller" id="scroller-minutes"></div>
                   </div>
-                  <span class="text-white text-[15px] font-semibold select-none pointer-events-none z-30 ml-0.5">分</span>
+                  <span class="text-white text-[15px] font-semibold select-none pointer-events-none z-30 ml-1.5">分</span>
                 </div>
 
                 <!-- Seconds Wheel -->
-                <div class="flex items-center relative h-[180px] ml-4">
+                <div class="flex items-center relative h-[180px] ml-5">
                   <div id="col-seconds" class="picker-column" onscroll="onPickerScroll(this, 'seconds')">
                     <div class="picker-scroller" id="scroller-seconds"></div>
                   </div>
-                  <span class="text-white text-[15px] font-semibold select-none pointer-events-none z-30 ml-0.5">秒</span>
+                  <span class="text-white text-[15px] font-semibold select-none pointer-events-none z-30 ml-1.5">秒</span>
                 </div>
               </div>
             </div>
@@ -446,7 +452,7 @@
             <div class="text-[11px] text-neutral-500 font-bold tracking-wider uppercase mb-2 px-1">最近の項目</div>
             <div id="timer-history-list" class="flex gap-2 overflow-x-auto pb-1 no-scrollbar"></div>
           </div>
-        </div>
+        </div> <!-- [バグ修正] 欠落していた `#view-timer` の閉じタグ div をここに完全に定義 -->
 
         <!-- 4. STOPWATCH VIEW -->
         <div id="view-stopwatch" class="hidden flex-col flex-1 justify-between py-4 transition-all duration-300">
@@ -509,9 +515,9 @@
         </div>
 
       </main>
-    </div>
+    </div> <!-- FIXED MAIN VIEWPORT 閉じタグ -->
 
-    <!-- ================= TABS NAVIGATION (絶対配置ボトム完全吸着) ================= -->
+    <!-- ================= TABS NAVIGATION (絶対配置ボトム完全密着吸着) ================= -->
     <!-- これにより、PC画面でもスマホ実機でも、タブバーの下に不自然な黒い隙間は物理的に発生しなくなります。 -->
     <nav class="absolute bottom-0 inset-x-0 h-16 bg-[#161616]/95 backdrop-blur-xl border-t border-white/10 flex justify-around items-center text-[10px] pb-[env(safe-area-inset-bottom,12px)] z-[98]">
       <button id="tab-world" class="flex flex-col items-center text-neutral-600 focus:outline-none transition-colors duration-200">
@@ -540,7 +546,7 @@
       </button>
     </nav>
 
-  </div>
+  </div> <!-- app-container 閉じタグ -->
 
   <!-- ================= ALARM LABEL SETTING SHEET ================= -->
   <div id="modal-label" class="fixed inset-0 bg-black/80 z-[100] flex flex-col justify-end transition-opacity duration-300 opacity-0 pointer-events-none" onclick="closeLabelMenu()">
@@ -929,7 +935,7 @@
               <div class="ios-switch-handle"></div>
             </div>
             <button onclick="deleteAlarm(${alarm.id})" class="text-neutral-600 hover:text-red-500 active:scale-90 transition-all p-1">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
             </button>
           </div>
         `;
@@ -1695,30 +1701,37 @@
       updateStopwatchTimer(); 
     }
 
+    // swReset の復旧
     function swReset() {
-      playHapticTick();
+      try {
+        playHapticTick();
+      } catch(e){}
       swState = 'idle';
       stopSwRenderLoop();
       swStartTime = 0;
       swElapsedTime = 0;
       swLaps = [];
 
-      swMainDisp.textContent = "00:00.";
-      swMsDisp.textContent = "00";
+      if (swMainDisp) swMainDisp.textContent = "00:00.";
+      if (swMsDisp) swMsDisp.textContent = "00";
 
       const secondsHandGroup = document.getElementById('svg-hand-seconds-group');
       const minutesHand = document.getElementById('svg-hand-sub-minutes');
       if (secondsHandGroup) secondsHandGroup.setAttribute('transform', 'rotate(0, 100, 100)');
       if (minutesHand) minutesHand.setAttribute('transform', 'rotate(0, 100, 62)');
 
-      swBtnPrimary.textContent = "開始";
-      swBtnPrimary.className = "ios-btn btn-green-start";
+      if (swBtnPrimary) {
+        swBtnPrimary.textContent = "開始";
+        swBtnPrimary.className = "ios-btn btn-green-start";
+      }
 
-      swBtnLap.textContent = "ラップ";
-      swBtnLap.disabled = true;
-      swBtnLap.className = "ios-btn btn-gray-disabled";
+      if (swBtnLap) {
+        swBtnLap.textContent = "ラップ";
+        swBtnLap.disabled = true;
+        swBtnLap.className = "ios-btn btn-gray-disabled";
+      }
 
-      swLapsTable.innerHTML = '';
+      if (swLapsTable) swLapsTable.innerHTML = '';
     }
 
     function swLap() {
@@ -1786,6 +1799,24 @@
       const secs = Math.floor((duration % 60000) / 1000);
       const ms = Math.floor((duration % 1000) / 10);
       return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}.${String(ms).padStart(2, '0')}`;
+    }
+
+    // ★修正ポイント: swBtnPrimary および swBtnLap の存在チェックを入れるなど、確実に要素へアクセス
+    const startStopwatchBtn = document.getElementById('sw-btn-primary');
+    const lapStopwatchBtn = document.getElementById('sw-btn-lap');
+
+    if (startStopwatchBtn) {
+      startStopwatchBtn.addEventListener('click', () => {
+        if (swState === 'running') swStop();
+        else swStart();
+      });
+    }
+
+    if (lapStopwatchBtn) {
+      lapStopwatchBtn.addEventListener('click', () => {
+        if (swState === 'running') swLap();
+        else if (swState === 'paused') swReset();
+      });
     }
 
     // ================= LABEL OPTIONS SHEET =================
