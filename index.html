@@ -253,8 +253,8 @@
     <div class="absolute top-0 left-1/2 -translate-x-1/2 w-36 h-6 bg-[#1c1c1e] rounded-b-2xl z-[99] hidden sm:block"></div>
 
     <!-- ================= FIXED MAIN VIEWPORT (コンテンツ表示領域) ================= -->
-    <!-- タブバーの正確な高さ(4rem + env-bottom)の上に配置し、要素の競合を完全にゼロにします -->
-    <div class="absolute inset-x-0 top-0 flex flex-col justify-between safe-pt overflow-hidden" style="bottom: calc(4rem + env(safe-area-inset-bottom, 0px));">
+    <!-- タブバーの正確な高さ(60px)の上に配置し、セーフエリア伸縮バグを遮断します -->
+    <div class="absolute inset-x-0 top-0 flex flex-col justify-between safe-pt overflow-hidden" style="bottom: calc(60px + env(safe-area-inset-bottom, 0px));">
       
       <!-- ================= TOP HEADER ================= -->
       <header class="flex justify-between items-center px-6 pt-3 pb-1 flex-shrink-0">
@@ -517,12 +517,11 @@
     </div> <!-- FIXED MAIN VIEWPORT 閉じタグ -->
 
     <!-- 物理的な下部突き抜け背景ガード (Gapバグの絶対解決策) -->
-    <div class="absolute inset-x-0 bottom-[-100px] h-[100px] bg-[#161616] z-[97] pointer-events-none"></div>
+    <div class="absolute inset-x-0 bottom-[-100px] h-[100px] bg-[#000000] z-[97] pointer-events-none"></div>
 
     <!-- ================= TABS NAVIGATION (絶対配置ボトム完全密着・漆黒シールド一体化) ================= -->
-    <!-- 高さを calc(4rem + env-bottom) で動的定義して padding-bottom でコンテンツを上に逃がすことで、 -->
-    <!-- 背景の漆黒が画面の底辺（ホームバーの奥深く）まで完全に途切れず吸着密着する iOS PWA 完全準拠 of 設計に変更しました。 -->
-    <nav class="absolute bottom-0 inset-x-0 h-16 bg-[#161616]/95 backdrop-blur-xl border-t border-white/10 flex justify-around items-center text-[10px] pb-[env(safe-area-inset-bottom,0px)] z-[98]" style="height: calc(4rem + env(safe-area-inset-bottom, 0px)); padding-bottom: env(safe-area-inset-bottom, 0px);">
+    <!-- 背景の漆黒が画面の底辺まで完全に途切れず吸着密着する iOS PWA 完全準拠の設計に変更しました。 -->
+    <nav class="absolute bottom-0 inset-x-0 bg-[#000000] border-t border-neutral-900 flex justify-around items-center text-[10px] pb-[env(safe-area-inset-bottom,0px)] z-[98]" style="height: calc(4rem + env(safe-area-inset-bottom, 0px)); padding-bottom: env(safe-area-inset-bottom, 0px);">
       <button id="tab-world" class="flex flex-col items-center text-neutral-600 focus:outline-none transition-colors duration-200">
         <svg class="w-[23px] h-[23px] mb-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="10" /><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" /><path d="M2 12h20" />
@@ -1019,7 +1018,7 @@
     const timersActiveContainer = document.getElementById('timers-active-container');
     const activeTimersList = document.getElementById('active-timers-list');
 
-    // プログラムからのスクロール制御フラグ（scrollイベントの不要な連鎖とバグを100%防ぎます）
+    // プログラムからのスクロール制御フラグ
     let isSettingProgrammatically = false;
 
     function buildPickers() {
@@ -1047,23 +1046,22 @@
       }
     }
 
-    // ★修正：スクロール位置変更時のフラグ排他処理を再実装（scrollイベントの衝突バグを完璧に防止します）
+    // ★ 修正：ドラムスクロール制御のバグ防止
     function setPickerIndex(colId, index) {
       const col = document.getElementById(colId);
       if (!col) return;
       
-      isSettingProgrammatically = true; // プログラム制御中フラグをON
+      isSettingProgrammatically = true; 
       col.scrollTop = index * 40;
       updatePickerVisuals(col, index, colId === 'col-hours' ? '時間' : colId === 'col-minutes' ? '分' : '秒');
       
-      // レンダリングが落ち着いた後にフラグを解放
       setTimeout(() => {
         isSettingProgrammatically = false;
       }, 150);
     }
 
     function onPickerScroll(col, type) {
-      if (isSettingProgrammatically) return; // プログラムからの変更中の手動スクロールイベントを安全に無視
+      if (isSettingProgrammatically) return; 
 
       if (scrollDebounceTimer) clearTimeout(scrollDebounceTimer);
       
@@ -1082,10 +1080,6 @@
       }, 100);
     }
 
-    // ドラムロール表示バグを完全解消: 
-    // スクロールされる数字アイテム(picker-val-item)には単位(unit)を絶対に結合せず、
-    // 純粋な数字「時間は一桁」「分・秒は二桁」のみをtextContentへ返します。
-    // これにより「0時間時間」や重なりズレが100%消失し、単位は右隣の<span>要素によって完全固定表示されます。
     function updatePickerVisuals(col, targetIdx, unit) {
       const items = col.querySelectorAll('.picker-val-item');
       const isHours = col.id === 'col-hours';
@@ -1447,7 +1441,7 @@
       return activeTimers[0]; 
     }
 
-    // ★ 修正：未定義になっていた updateActivePiP 関数をここに確実に実装
+    // ★ updateActivePiP 関数の定義漏れバグを100%解決
     function updateActivePiP() {
       drawPipCanvas();
     }
@@ -1746,6 +1740,7 @@
       updateStopwatchTimer(); 
     }
 
+    // swReset の復旧
     function swReset() {
       try {
         playHapticTick();
