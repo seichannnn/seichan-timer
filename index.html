@@ -70,6 +70,7 @@
       height: 180px;
       position: relative;
       overflow-y: scroll;
+      -webkit-overflow-scrolling: touch; /* iOSでの滑らかなスクロール感を実現 */
       scroll-snap-type: y mandatory;
       scrollbar-width: none;
       z-index: 2;
@@ -232,6 +233,7 @@
         bottom: 0 !important;
         width: 100vw !important;
         height: 100% !important;
+        height: 100dvh !important; /* iOSのアドレスバーを考慮した極限吸着 */
         border-radius: 0 !important;
         border: none !important;
         box-shadow: none !important;
@@ -253,8 +255,8 @@
     <div class="absolute top-0 left-1/2 -translate-x-1/2 w-36 h-6 bg-[#1c1c1e] rounded-b-2xl z-[99] hidden sm:block"></div>
 
     <!-- ================= FIXED MAIN VIEWPORT (コンテンツ表示領域) ================= -->
-    <!-- タブバーの正確な高さ(60px)の上に配置し、セーフエリア伸縮バグを遮断します -->
-    <div class="absolute inset-x-0 top-0 flex flex-col justify-between safe-pt overflow-hidden" style="bottom: calc(60px + env(safe-area-inset-bottom, 0px));">
+    <!-- タブバーの正確な高さ(4.5rem = 72px)の上に配置し、セーフエリア伸縮バグを完全に遮断します -->
+    <div class="absolute inset-x-0 top-0 flex flex-col justify-between safe-pt overflow-hidden" style="bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));">
       
       <!-- ================= TOP HEADER ================= -->
       <header class="flex justify-between items-center px-6 pt-3 pb-1 flex-shrink-0">
@@ -346,7 +348,7 @@
               <div class="flex justify-center items-center h-full w-full relative z-20">
                 <!-- Hours Wheel -->
                 <div class="flex items-center relative h-[180px]">
-                  <div id="col-hours" class="picker-column" onscroll="onPickerScroll(this, 'hours')">
+                  <div id="col-hours" class="picker-column overflow-y-scroll" onscroll="onPickerScroll(this, 'hours')">
                     <div class="picker-scroller" id="scroller-hours"></div>
                   </div>
                   <span class="text-white text-[15px] font-semibold select-none pointer-events-none z-30 ml-1.5">時間</span>
@@ -354,7 +356,7 @@
 
                 <!-- Minutes Wheel -->
                 <div class="flex items-center relative h-[180px] ml-5">
-                  <div id="col-minutes" class="picker-column" onscroll="onPickerScroll(this, 'minutes')">
+                  <div id="col-minutes" class="picker-column overflow-y-scroll" onscroll="onPickerScroll(this, 'minutes')">
                     <div class="picker-scroller" id="scroller-minutes"></div>
                   </div>
                   <span class="text-white text-[15px] font-semibold select-none pointer-events-none z-30 ml-1.5">分</span>
@@ -362,7 +364,7 @@
 
                 <!-- Seconds Wheel -->
                 <div class="flex items-center relative h-[180px] ml-5">
-                  <div id="col-seconds" class="picker-column" onscroll="onPickerScroll(this, 'seconds')">
+                  <div id="col-seconds" class="picker-column overflow-y-scroll" onscroll="onPickerScroll(this, 'seconds')">
                     <div class="picker-scroller" id="scroller-seconds"></div>
                   </div>
                   <span class="text-white text-[15px] font-semibold select-none pointer-events-none z-30 ml-1.5">秒</span>
@@ -405,7 +407,7 @@
               <div class="flex flex-col items-center justify-center z-10 text-center">
                 <!-- タイマー稼働中用のラベル名 -->
                 <span id="timer-running-title" class="text-[#8e8e93] text-sm font-normal tracking-wide mb-1 select-none">タイマー</span>
-                <!-- 究極に細く研ぎ澄まされた極上のInterフォント表示 (文字サイズを大きく調整) -->
+                <!-- 究極に細く研ぎ澄まされた極上のInterフォント表示 -->
                 <span id="timer-countdown" class="text-[5.5rem] font-thin tracking-tight tabular-timer text-white select-none leading-none">4:59</span>
                 <div class="flex items-center gap-1 text-[15px] text-[#8e8e93] mt-4 font-normal">
                   <svg class="w-3.5 h-3.5 fill-current text-[#8e8e93]" viewBox="0 0 24 24">
@@ -520,8 +522,9 @@
     <div class="absolute inset-x-0 bottom-[-100px] h-[100px] bg-[#000000] z-[97] pointer-events-none"></div>
 
     <!-- ================= TABS NAVIGATION (絶対配置ボトム完全密着・漆黒シールド一体化) ================= -->
-    <!-- 背景の漆黒が画面の底辺まで完全に途切れず吸着密着する iOS PWA 完全準拠の設計に変更しました。 -->
-    <nav class="absolute bottom-0 inset-x-0 bg-[#000000] border-t border-neutral-900 flex justify-around items-center text-[10px] pb-[env(safe-area-inset-bottom,0px)] z-[98]" style="height: calc(4rem + env(safe-area-inset-bottom, 0px)); padding-bottom: env(safe-area-inset-bottom, 0px);">
+    <!-- 高さを calc(4.5rem + env-bottom) で動的定義して padding-bottom でコンテンツを上に逃がすことで、 -->
+    <!-- 背景の漆黒が画面の底辺（ホームバーの奥深く）まで完全に途切れず吸着密着する iOS PWA 完全準拠の設計に変更しました。 -->
+    <nav class="absolute bottom-0 inset-x-0 bg-[#000000] border-t border-neutral-900 flex justify-around items-center text-[10px] pb-[env(safe-area-inset-bottom,0px)] z-[98]" style="height: calc(4.5rem + env(safe-area-inset-bottom, 0px)); padding-bottom: env(safe-area-inset-bottom, 0px);">
       <button id="tab-world" class="flex flex-col items-center text-neutral-600 focus:outline-none transition-colors duration-200">
         <svg class="w-[23px] h-[23px] mb-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="10" /><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" /><path d="M2 12h20" />
@@ -617,9 +620,9 @@
   </div>
 
   <!-- ================= HIDDEN ELEMENTS FOR PICTURE IN PICTURE (高画質PiP用) ================= -->
-  <!-- iOS Safari でPiPを動作させるため、display: noneにせず opacity: 0 かつ offscreen 配置に変更しました -->
-  <canvas id="pip-canvas" width="600" height="600" class="absolute pointer-events-none opacity-0" style="width: 1px; height: 1px; left: -9999px;"></canvas>
-  <video id="pip-video" autoplay muted playsinline class="absolute pointer-events-none opacity-0" style="width: 1px; height: 1px; left: -9999px;"></video>
+  <!-- iOS Safari でPiPを動作させるため、display: noneにせず opacity-0.01 かつ 画面内(z-0) 配置に変更しました -->
+  <canvas id="pip-canvas" width="600" height="600" class="absolute bottom-0 left-0 w-2 h-2 opacity-[0.01] pointer-events-none z-0"></canvas>
+  <video id="pip-video" autoplay muted playsinline class="absolute bottom-0 left-0 w-2 h-2 opacity-[0.01] pointer-events-none z-0"></video>
 
   <!-- ================= SOUNDS SYNTHESIZER AND OPERATIONAL AUDIO ================= -->
   <script>
@@ -1957,10 +1960,12 @@
       }, { once: true });
 
       // ★ 視点を変えた最強のバウンスロック処理 ★
+      // iOS PWA特有の「画面全体の弾性バウンススクロール」による下部隙間露出バグを、タッチイベント層で100%防ぎます。
       document.addEventListener('touchmove', function(e) {
         const isScrollable = e.target.closest('.overflow-y-auto') || 
                              e.target.closest('.overflow-y-scroll') || 
-                             e.target.closest('.overflow-x-auto');
+                             e.target.closest('.overflow-x-auto') ||
+                             e.target.closest('.picker-column'); // Allow scrolling picker column!
         if (!isScrollable) {
           e.preventDefault();
         }
